@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>iOS RDP Web Client</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Oxygen, Ubuntu, Cantarell, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      .container {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        padding: 30px;
+        max-width: 1200px;
+        width: 100%;
+      }
+
+      h1 {
+        color: #333;
+        margin-bottom: 10px;
+        text-align: center;
+      }
+
+      .subtitle {
+        color: #666;
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .controls {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+
+      button {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        flex: 1;
+        min-width: 120px;
+      }
+
+      button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      }
+
+      button:active {
+        transform: translateY(0);
+      }
+
+      .btn-connect {
+        background: #4caf50;
+        color: white;
+      }
+
+      .btn-connect:hover {
+        background: #45a049;
+      }
+
+      .btn-disconnect {
+        background: #f44336;
+        color: white;
+      }
+
+      .btn-disconnect:hover {
+        background: #da190b;
+      }
+
+      .btn-disconnect:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+      }
+
+      .video-container {
+        position: relative;
+        width: 100%;
+        background: #000;
+        border-radius: 8px;
+        overflow: hidden;
+        aspect-ratio: 16/9;
+        margin-bottom: 20px;
+      }
+
+      #remoteVideo {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+
+      .status {
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-weight: 500;
+      }
+
+      .status.connected {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+
+      .status.disconnected {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+
+      .status.connecting {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+      }
+
+      .log {
+        background: #f5f5f5;
+        border-radius: 8px;
+        padding: 15px;
+        max-height: 200px;
+        overflow-y: auto;
+        font-family: "Courier New", monospace;
+        font-size: 12px;
+        line-height: 1.6;
+      }
+
+      .log-entry {
+        margin-bottom: 5px;
+        padding: 5px;
+        border-radius: 4px;
+      }
+
+      .log-entry.info {
+        background: #e3f2fd;
+        color: #1976d2;
+      }
+
+      .log-entry.success {
+        background: #e8f5e9;
+        color: #388e3c;
+      }
+
+      .log-entry.error {
+        background: #ffebee;
+        color: #c62828;
+      }
+
+      .log-entry.warning {
+        background: #fff3e0;
+        color: #f57c00;
+      }
+
+      .config {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+
+      input {
+        flex: 1;
+        padding: 10px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        font-size: 14px;
+        min-width: 200px;
+      }
+
+      input:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>📱 iOS RDP Web Client</h1>
+      <p class="subtitle">Connect to iOS device screen sharing via WebRTC</p>
+
+      <div class="config">
+        <input
+          type="text"
+          id="serverUrl"
+          placeholder="WebSocket URL (e.g., ws://localhost:5050/ws)"
+          value="ws://localhost:5050/ws"
+        />
+      </div>
+
+      <div class="controls">
+        <button class="btn-connect" id="connectBtn" onclick="connect()">
+          Connect
+        </button>
+        <button
+          class="btn-disconnect"
+          id="disconnectBtn"
+          onclick="disconnect()"
+          disabled
+        >
+          Disconnect
+        </button>
+      </div>
+
+      <div id="status" class="status disconnected">Status: Disconnected</div>
+
+      <div class="video-container">
+        <video id="remoteVideo" autoplay playsinline></video>
+      </div>
+
+      <div class="log" id="log"></div>
+    </div>
+
+    <script>
+      let peerConnection = null;
+      let websocket = null;
+      let remoteVideo = document.getElementById("remoteVideo");
+      let connectBtn = document.getElementById("connectBtn");
+      let disconnectBtn = document.getElementById("disconnectBtn");
+      let statusDiv = document.getElementById("status");
+      let logDiv = document.getElementById("log");
+
+      const configuration = {
+        iceServers: [
+          { urls: "stun:stun.l.google.com:19302" },
+          { urls: "stun:stun1.l.google.com:19302" },
+        ],
+      };
+
+      function log(message, type = "info") {
+        const entry = document.createElement("div");
+        entry.className = `log-entry ${type}`;
+        entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+        logDiv.appendChild(entry);
+        logDiv.scrollTop = logDiv.scrollHeight;
+        console.log(message);
+      }
+
+      function updateStatus(status, message) {
+        statusDiv.className = `status ${status}`;
+        statusDiv.textContent = `Status: ${message}`;
+      }
+
+      function connect() {
+        const serverUrl = document.getElementById("serverUrl").value;
+
+        if (!serverUrl) {
+          log("Please enter a WebSocket URL", "error");
+          return;
+        }
+
+        log("Connecting to signaling server...", "info");
+        updateStatus("connecting", "Connecting...");
+
+        connectBtn.disabled = true;
+        disconnectBtn.disabled = false;
+
+        // Create WebSocket connection
+        websocket = new WebSocket(serverUrl);
+
+        websocket.onopen = () => {
+          log("✅ WebSocket connected", "success");
+          updateStatus(
+            "connecting",
+            "WebSocket connected, waiting for offer..."
+          );
+
+          // Create peer connection
+          createPeerConnection();
+        };
+
+        websocket.onmessage = (event) => {
+          try {
+            const message = JSON.parse(event.data);
+            log(`📩 Received: ${message.type}`, "info");
+            handleSignalingMessage(message);
+          } catch (error) {
+            log(`❌ Failed to parse message: ${error.message}`, "error");
+          }
+        };
+
+        websocket.onerror = (error) => {
+          log(`❌ WebSocket error: ${error}`, "error");
+          updateStatus("disconnected", "Connection error");
+        };
+
+        websocket.onclose = () => {
+          log("🔌 WebSocket closed", "warning");
+          updateStatus("disconnected", "Disconnected");
+          connectBtn.disabled = false;
+          disconnectBtn.disabled = true;
+        };
+      }
+
+      function createPeerConnection() {
+        log("🔧 Creating peer connection...", "info");
+
+        peerConnection = new RTCPeerConnection(configuration);
+
+        // Handle ICE candidates
+        peerConnection.onicecandidate = (event) => {
+          if (event.candidate) {
+            log("🧊 ICE candidate generated", "info");
+            sendSignalingMessage({
+              type: "candidate",
+              candidate: event.candidate.candidate,
+              sdpMLineIndex: event.candidate.sdpMLineIndex,
+              sdpMid: event.candidate.sdpMid,
+            });
+          }
+        };
+
+        // Handle connection state changes
+        peerConnection.onconnectionstatechange = () => {
+          log(`📶 Connection state: ${peerConnection.connectionState}`, "info");
+
+          switch (peerConnection.connectionState) {
+            case "connected":
+              updateStatus("connected", "Connected - Receiving video");
+              log("✅ WebRTC connected!", "success");
+              break;
+            case "disconnected":
+            case "failed":
+            case "closed":
+              updateStatus("disconnected", "Disconnected");
+              log("❌ WebRTC disconnected", "error");
+              break;
+          }
+        };
+
+        // Handle ICE connection state
+        peerConnection.oniceconnectionstatechange = () => {
+          log(
+            `🧊 ICE connection state: ${peerConnection.iceConnectionState}`,
+            "info"
+          );
+        };
+
+        // Handle incoming stream
+        peerConnection.ontrack = (event) => {
+          log("📹 Remote stream received", "success");
+          remoteVideo.srcObject = event.streams[0];
+        };
+
+        log("✅ Peer connection created", "success");
+      }
+
+      function handleSignalingMessage(message) {
+        if (!peerConnection) {
+          log("⚠️ Peer connection not created yet", "warning");
+          return;
+        }
+
+        switch (message.type) {
+          case "offer":
+            log("📥 Received offer, creating answer...", "info");
+            handleOffer(message);
+            break;
+
+          case "answer":
+            log("📥 Received answer", "info");
+            handleAnswer(message);
+            break;
+
+          case "candidate":
+            log("📥 Received ICE candidate", "info");
+            handleIceCandidate(message);
+            break;
+
+          default:
+            log(`⚠️ Unknown message type: ${message.type}`, "warning");
+        }
+      }
+
+      async function handleOffer(message) {
+        try {
+          await peerConnection.setRemoteDescription(
+            new RTCSessionDescription({
+              type: "offer",
+              sdp: message.sdp,
+            })
+          );
+          log("✅ Remote description set (offer)", "success");
+
+          const answer = await peerConnection.createAnswer();
+          await peerConnection.setLocalDescription(answer);
+          log("✅ Local description set (answer)", "success");
+
+          sendSignalingMessage({
+            type: "answer",
+            sdp: answer.sdp,
+          });
+          log("📤 Answer sent", "success");
+        } catch (error) {
+          log(`❌ Error handling offer: ${error.message}`, "error");
+        }
+      }
+
+      async function handleAnswer(message) {
+        try {
+          await peerConnection.setRemoteDescription(
+            new RTCSessionDescription({
+              type: "answer",
+              sdp: message.sdp,
+            })
+          );
+          log("✅ Remote description set (answer)", "success");
+        } catch (error) {
+          log(`❌ Error handling answer: ${error.message}`, "error");
+        }
+      }
+
+      async function handleIceCandidate(message) {
+        try {
+          await peerConnection.addIceCandidate(
+            new RTCIceCandidate({
+              candidate: message.candidate,
+              sdpMLineIndex: message.sdpMLineIndex,
+              sdpMid: message.sdpMid,
+            })
+          );
+          log("✅ ICE candidate added", "success");
+        } catch (error) {
+          log(`❌ Error adding ICE candidate: ${error.message}`, "error");
+        }
+      }
+
+      function sendSignalingMessage(message) {
+        if (websocket && websocket.readyState === WebSocket.OPEN) {
+          websocket.send(JSON.stringify(message));
+          log(`📤 Sent: ${message.type}`, "info");
+        } else {
+          log("❌ Cannot send: WebSocket not open", "error");
+        }
+      }
+
+      function disconnect() {
+        log("🔌 Disconnecting...", "info");
+
+        if (peerConnection) {
+          peerConnection.close();
+          peerConnection = null;
+        }
+
+        if (websocket) {
+          websocket.close();
+          websocket = null;
+        }
+
+        remoteVideo.srcObject = null;
+        updateStatus("disconnected", "Disconnected");
+        connectBtn.disabled = false;
+        disconnectBtn.disabled = true;
+
+        log("✅ Disconnected", "success");
+      }
+
+      // Cleanup on page unload
+      window.addEventListener("beforeunload", () => {
+        disconnect();
+      });
+
+      // Initial log
+      log("🚀 Web client ready. Click Connect to start.", "info");
+    </script>
+  </body>
+</html>
