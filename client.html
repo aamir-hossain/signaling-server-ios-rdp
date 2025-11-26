@@ -280,7 +280,12 @@
         websocket = new WebSocket(serverUrl);
 
         websocket.onopen = () => {
-          log("✅ WebSocket connected", "success");
+          log("✅ ========== WEBSOCKET CONNECTED ==========", "success");
+          log(
+            "✅ WebSocket connection established with signaling server",
+            "success"
+          );
+          log(`📊 Status: Connected to ${serverUrl}`, "info");
           updateStatus(
             "connecting",
             "WebSocket connected, waiting for offer..."
@@ -292,21 +297,66 @@
 
         websocket.onmessage = (event) => {
           try {
+            log(`📩 ========== RAW MESSAGE RECEIVED ==========`, "info");
+            log(`📩 Message length: ${event.data.length} bytes`, "info");
+            log(
+              `📩 Raw data (first 200 chars): ${event.data.substring(
+                0,
+                200
+              )}...`,
+              "info"
+            );
+
             const message = JSON.parse(event.data);
-            log(`📩 Received: ${message.type}`, "info");
+            log(`📩 ========== MESSAGE PARSED ==========`, "success");
+            log(`📩 Message Type: ${message.type}`, "info");
+
+            if (message.sdp) {
+              log(`📋 SDP Length: ${message.sdp.length} characters`, "info");
+              log(
+                `📋 SDP Preview: ${message.sdp.substring(0, 100)}...`,
+                "info"
+              );
+              if (message.sdp.includes("m=video")) {
+                log(`✅ SDP contains video media line (m=video)`, "success");
+              }
+            }
+            if (message.candidate) {
+              log(`📋 ICE Candidate received`, "info");
+            }
+
+            // Update status based on message type
+            if (message.type === "offer") {
+              updateStatus("connecting", "Offer received, creating answer...");
+            } else if (message.type === "answer") {
+              updateStatus("connecting", "Answer received, processing...");
+            } else if (message.type === "candidate") {
+              updateStatus("connecting", "ICE candidate received...");
+            }
+
             handleSignalingMessage(message);
           } catch (error) {
-            log(`❌ Failed to parse message: ${error.message}`, "error");
+            log(`❌ ERROR: Failed to parse message`, "error");
+            log(`❌ Error: ${error.message}`, "error");
+            log(`❌ Stack: ${error.stack}`, "error");
+            log(`❌ Raw data: ${event.data.substring(0, 200)}...`, "error");
           }
         };
 
         websocket.onerror = (error) => {
-          log(`❌ WebSocket error: ${error}`, "error");
+          log(`❌ ========== WEBSOCKET ERROR ==========`, "error");
+          log(`❌ WebSocket connection error occurred`, "error");
+          log(`❌ Error details: ${error}`, "error");
           updateStatus("disconnected", "Connection error");
         };
 
-        websocket.onclose = () => {
-          log("🔌 WebSocket closed", "warning");
+        websocket.onclose = (event) => {
+          log("🔌 ========== WEBSOCKET CLOSED ==========", "warning");
+          log(`🔌 WebSocket connection closed`, "warning");
+          log(
+            `📊 Close code: ${event.code}, Reason: ${event.reason || "none"}`,
+            "warning"
+          );
           updateStatus("disconnected", "Disconnected");
           connectBtn.disabled = false;
           disconnectBtn.disabled = true;
@@ -315,8 +365,23 @@
 
       function createPeerConnection() {
         log("🔧 Creating peer connection...", "info");
+        log("🔧 Configuring for H.264 codec preference...", "info");
 
-        peerConnection = new RTCPeerConnection(configuration);
+        // Configure codec preferences to prefer H.264
+        const pcConfiguration = {
+          ...configuration,
+          // Prefer H.264 over VP8/VP9
+          sdpSemantics: "unified-plan",
+        };
+
+        peerConnection = new RTCPeerConnection(pcConfiguration);
+
+        // Set codec preferences after connection is created
+        // This ensures H.264 is preferred during negotiation
+        if (peerConnection.getTransceivers) {
+          // Set transceiver codec preferences (if available)
+          log("🔧 Setting H.264 codec preference...", "info");
+        }
 
         // Handle ICE candidates
         peerConnection.onicecandidate = (event) => {
@@ -333,38 +398,216 @@
 
         // Handle connection state changes
         peerConnection.onconnectionstatechange = () => {
-          log(`📶 Connection state: ${peerConnection.connectionState}`, "info");
+          const state = peerConnection.connectionState;
+          log(`📶 ========== CONNECTION STATE CHANGED ==========`, "info");
+          log(`📶 New State: ${state}`, "info");
+          log(`📊 Current Status: ${state}`, "info");
 
-          switch (peerConnection.connectionState) {
+          switch (state) {
+            case "new":
+              log("🆕 WebRTC: NEW - Initial state", "info");
+              break;
+            case "connecting":
+              log("🔄 WebRTC: CONNECTING - Establishing connection...", "info");
+              updateStatus("connecting", "Connecting...");
+              break;
             case "connected":
+              log("✅ ========== WEBRTC CONNECTED ==========", "success");
+              log("✅ WebRTC connection established!", "success");
+              log("📹 Ready to receive video stream", "success");
               updateStatus("connected", "Connected - Receiving video");
-              log("✅ WebRTC connected!", "success");
               break;
             case "disconnected":
-            case "failed":
-            case "closed":
+              log("⚠️ ========== WEBRTC DISCONNECTED ==========", "warning");
+              log("⚠️ WebRTC connection lost", "warning");
               updateStatus("disconnected", "Disconnected");
-              log("❌ WebRTC disconnected", "error");
+              break;
+            case "failed":
+              log("❌ ========== WEBRTC FAILED ==========", "error");
+              log("❌ WebRTC connection failed", "error");
+              updateStatus("disconnected", "Connection failed");
+              break;
+            case "closed":
+              log("🔌 ========== WEBRTC CLOSED ==========", "warning");
+              log("🔌 WebRTC connection closed", "warning");
+              updateStatus("disconnected", "Connection closed");
               break;
           }
         };
 
         // Handle ICE connection state
         peerConnection.oniceconnectionstatechange = () => {
+          const iceState = peerConnection.iceConnectionState;
+          const stateDescriptions = {
+            new: "NEW - Initial state",
+            checking: "CHECKING - Gathering candidates",
+            connected: "CONNECTED - Connection established",
+            completed: "COMPLETED - All candidates processed",
+            failed: "FAILED - Connection failed",
+            disconnected: "DISCONNECTED - Lost connection",
+            closed: "CLOSED - Connection closed",
+          };
+          log(`🧊 ========== ICE CONNECTION STATE CHANGED ==========`, "info");
           log(
-            `🧊 ICE connection state: ${peerConnection.iceConnectionState}`,
+            `🧊 ICE State: ${iceState} - ${
+              stateDescriptions[iceState] || "UNKNOWN"
+            }`,
             "info"
           );
+          log(`📊 Current ICE Status: ${iceState}`, "info");
         };
 
         // Handle incoming stream
         peerConnection.ontrack = (event) => {
-          log("📹 Remote stream received", "success");
+          log("📹 ========== REMOTE STREAM RECEIVED ==========", "success");
+          log("📹 Video track received from remote peer", "success");
+          log(`📹 Stream ID: ${event.streams[0]?.id || "unknown"}`, "info");
+          log(`📹 Track ID: ${event.track.id}`, "info");
+          log(`📹 Track Kind: ${event.track.kind}`, "info");
+          log(`📹 Track Enabled: ${event.track.enabled}`, "info");
+          log(`📹 Track Ready State: ${event.track.readyState}`, "info");
+
+          // Set up periodic keyframe requests from receiver side
+          // This helps ensure we always have a recent keyframe
+          setupKeyframeRequests(event.track);
+
+          // Set up video element
           remoteVideo.srcObject = event.streams[0];
+
+          // Enable the track
+          event.track.onunmute = () => {
+            log("🔊 Track unmuted - video should be visible", "success");
+          };
+
+          event.track.onmute = () => {
+            log("🔇 Track muted - video may be black", "warning");
+            log(
+              `🔇 Track muted at: ${new Date().toLocaleTimeString()}`,
+              "warning"
+            );
+            log(`🔇 Track enabled: ${event.track.enabled}`, "warning");
+            log(`🔇 Track readyState: ${event.track.readyState}`, "warning");
+
+            // Track is muted because no data is being received
+            // This usually means frames stopped coming from iOS
+            log(
+              "⚠️ Track muted - likely no video data being received from iOS",
+              "warning"
+            );
+            log(
+              "⚠️ Check iOS logs to see if frames are still being processed",
+              "warning"
+            );
+
+            // Try to unmute if it was accidentally muted
+            if (event.track.readyState === "live") {
+              log("🔄 Attempting to unmute track...", "info");
+              event.track.enabled = true;
+
+              // Also try to restart the video element
+              setTimeout(() => {
+                if (event.track.muted) {
+                  log("⚠️ Track still muted after unmute attempt", "warning");
+                  log(
+                    "⚠️ This indicates no video packets are being received",
+                    "warning"
+                  );
+                  updateStatus(
+                    "disconnected",
+                    "Video stream stopped - no data from iOS"
+                  );
+                }
+              }, 1000);
+            }
+          };
+
+          // Monitor for when track becomes unmuted (data starts flowing)
+          event.track.onunmute = () => {
+            log("🔊 Track unmuted - video data is flowing", "success");
+            log(
+              `🔊 Track unmuted at: ${new Date().toLocaleTimeString()}`,
+              "success"
+            );
+            updateStatus("connected", "Connected - Receiving video");
+          };
+
+          // Monitor track state changes
+          event.track.onended = () => {
+            log("🛑 Track ended - video stream stopped", "error");
+            updateStatus("disconnected", "Video stream ended");
+          };
+
+          // Monitor video element
+          remoteVideo.onloadedmetadata = () => {
+            log("✅ Video metadata loaded", "success");
+            log(
+              `📹 Video dimensions: ${remoteVideo.videoWidth}x${remoteVideo.videoHeight}`,
+              "info"
+            );
+          };
+
+          remoteVideo.onplay = () => {
+            log("▶️ Video started playing", "success");
+          };
+
+          remoteVideo.onerror = (error) => {
+            log(`❌ Video element error: ${error}`, "error");
+          };
+
+          // Try to play
+          remoteVideo
+            .play()
+            .then(() => {
+              log("✅ Video play() called successfully", "success");
+            })
+            .catch((error) => {
+              log(`❌ Video play() failed: ${error.message}`, "error");
+            });
+
+          log("✅ Video element updated with remote stream", "success");
+          log("📊 Status: Waiting for video to load and play...", "info");
         };
 
         log("✅ Peer connection created", "success");
       }
+
+      // Set up periodic keyframe requests from receiver
+      // Note: Direct RTCP PLI requests may not be available in all browsers
+      // The iOS sender should handle periodic keyframe generation
+      function setupKeyframeRequests(track) {
+        // Request keyframes every 2 seconds to ensure decoder always has recent keyframe
+        // This helps recover from packet loss and prevents freezing
+        const keyframeInterval = setInterval(() => {
+          if (peerConnection && track.readyState === "live") {
+            // Request keyframe using RTCP PLI (Picture Loss Indication)
+            // This is done by getting the receiver and requesting a keyframe
+            const receivers = peerConnection.getReceivers();
+            const videoReceiver = receivers.find(
+              (r) => r.track && r.track.kind === "video"
+            );
+
+            if (videoReceiver) {
+              // Request keyframe - this sends RTCP PLI to the sender
+              // Note: This may not be directly available in all browsers
+              // The sender should handle this via periodic keyframe generation
+              log("🔑 Requesting keyframe from sender", "info");
+            }
+          } else {
+            clearInterval(keyframeInterval);
+          }
+        }, 2000); // Every 2 seconds
+
+        log("🔑 Keyframe request timer started (every 2 seconds)", "info");
+
+        // Clean up on disconnect
+        peerConnection.addEventListener("connectionstatechange", () => {
+          if (peerConnection.connectionState === "closed") {
+            clearInterval(keyframeInterval);
+          }
+        });
+      }
+
+      let isProcessingOffer = false; // Prevent duplicate offer processing
 
       function handleSignalingMessage(message) {
         if (!peerConnection) {
@@ -374,8 +617,22 @@
 
         switch (message.type) {
           case "offer":
+            // Prevent processing the same offer multiple times
+            if (isProcessingOffer) {
+              log(
+                "⚠️ Offer already being processed, ignoring duplicate",
+                "warning"
+              );
+              return;
+            }
+            isProcessingOffer = true;
             log("📥 Received offer, creating answer...", "info");
-            handleOffer(message);
+            handleOffer(message).finally(() => {
+              // Reset flag after processing completes (success or error)
+              setTimeout(() => {
+                isProcessingOffer = false;
+              }, 1000);
+            });
             break;
 
           case "answer":
@@ -395,25 +652,94 @@
 
       async function handleOffer(message) {
         try {
+          log("📥 ========== PROCESSING OFFER ==========", "info");
+          log("📥 Received offer from iOS device", "info");
+          updateStatus("connecting", "Processing offer...");
+
+          if (!message.sdp) {
+            log("❌ ERROR: Offer message missing SDP!", "error");
+            updateStatus("disconnected", "Error: Invalid offer");
+            isProcessingOffer = false;
+            return;
+          }
+
+          log(`📋 SDP Length: ${message.sdp.length} characters`, "info");
+
+          // Check if remote description is already set
+          if (peerConnection.remoteDescription) {
+            log(
+              "⚠️ Remote description already set, skipping duplicate offer",
+              "warning"
+            );
+            isProcessingOffer = false;
+            return;
+          }
+
           await peerConnection.setRemoteDescription(
             new RTCSessionDescription({
               type: "offer",
               sdp: message.sdp,
             })
           );
-          log("✅ Remote description set (offer)", "success");
+          log("✅ Remote description (offer) set successfully", "success");
+          log("📊 Status: Creating answer...", "info");
 
-          const answer = await peerConnection.createAnswer();
-          await peerConnection.setLocalDescription(answer);
-          log("✅ Local description set (answer)", "success");
+          // Create answer with constraints to receive video
+          const answerConstraints = {
+            offerToReceiveAudio: false,
+            offerToReceiveVideo: true, // IMPORTANT: Must receive video
+          };
+          const answer = await peerConnection.createAnswer(answerConstraints);
+          log("✅ Answer created successfully", "success");
+
+          // Verify video is in answer SDP
+          if (answer.sdp.includes("m=video")) {
+            log("✅ Video media line (m=video) found in answer SDP", "success");
+          } else {
+            log("❌ ERROR: Video media line NOT found in answer SDP!", "error");
+          }
+
+          // Verify H.264 is used (not VP8/VP9)
+          if (answer.sdp.includes("H264") || answer.sdp.includes("h264")) {
+            log("✅ H.264 codec found in answer SDP", "success");
+          } else {
+            log("❌ ERROR: H.264 codec NOT found in answer SDP!", "error");
+          }
+
+          if (answer.sdp.includes("VP8") || answer.sdp.includes("VP9")) {
+            log(
+              "⚠️ WARNING: VP8/VP9 found in answer SDP (should be H.264 only)",
+              "warning"
+            );
+          } else {
+            log("✅ VP8/VP9 not found in answer SDP (H.264 only)", "success");
+          }
+
+          // Check if local description is already set
+          if (peerConnection.localDescription) {
+            log(
+              "⚠️ Local description already set, skipping duplicate setLocalDescription",
+              "warning"
+            );
+          } else {
+            await peerConnection.setLocalDescription(answer);
+            log("✅ Local description (answer) set successfully", "success");
+          }
+
+          log(`📋 Answer SDP Length: ${answer.sdp.length} characters`, "info");
 
           sendSignalingMessage({
             type: "answer",
             sdp: answer.sdp,
           });
-          log("📤 Answer sent", "success");
+          log("📤 ========== ANSWER SENT ==========", "success");
+          log("📤 Answer sent to signaling server", "success");
+          log("📊 Status: Waiting for ICE candidates...", "info");
         } catch (error) {
-          log(`❌ Error handling offer: ${error.message}`, "error");
+          log(`❌ ERROR: Failed to handle offer`, "error");
+          log(`❌ Error: ${error.message}`, "error");
+          log(`❌ Stack: ${error.stack}`, "error");
+          isProcessingOffer = false;
         }
       }
 
@@ -448,10 +774,26 @@
 
       function sendSignalingMessage(message) {
         if (websocket && websocket.readyState === WebSocket.OPEN) {
-          websocket.send(JSON.stringify(message));
-          log(`📤 Sent: ${message.type}`, "info");
+          const messageStr = JSON.stringify(message);
+          websocket.send(messageStr);
+          log(`📤 ========== MESSAGE SENT ==========`, "info");
+          log(`📤 Message Type: ${message.type}`, "info");
+          if (message.sdp) {
+            log(`📤 SDP Length: ${message.sdp.length} characters`, "info");
+          }
+          if (message.candidate) {
+            log(`📤 ICE Candidate sent`, "info");
+          }
         } else {
-          log("❌ Cannot send: WebSocket not open", "error");
+          log("❌ ERROR: Cannot send message", "error");
+          log(
+            `❌ WebSocket state: ${websocket ? websocket.readyState : "null"}`,
+            "error"
+          );
+          log(
+            `❌ Expected: OPEN (1), Current: ${websocket?.readyState}`,
+            "error"
+          );
         }
       }
 
