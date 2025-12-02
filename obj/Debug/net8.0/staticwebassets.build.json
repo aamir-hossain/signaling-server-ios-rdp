@@ -1,11 +1,1 @@
-{
-  "Version": 1,
-  "Hash": "Mp2BGgKhgwPVbfJ0MF7CwpIqHVB5Mxr8ZWyt0jR+6nY=",
-  "Source": "signaling-server-ios-rdp",
-  "BasePath": "_content/signaling-server-ios-rdp",
-  "Mode": "Default",
-  "ManifestType": "Build",
-  "ReferencedProjectsConfiguration": [],
-  "DiscoveryPatterns": [],
-  "Assets": []
-}
+{"Version":1,"Hash":"V6lfYA4k6xet1X1VPBDVsuGH8a0AiQ32o9vW1pXk9HA=","Source":"signaling-server-ios-rdp","BasePath":"/","Mode":"Root","ManifestType":"Build","ReferencedProjectsConfiguration":[],"DiscoveryPatterns":[],"Assets":[],"Endpoints":[]}
