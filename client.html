@@ -226,9 +226,13 @@
       // "disconnected" | "connecting" | "connected"
       let sessionState = "disconnected";
 
-      // Click handling for single vs double tap on the video
+      // Click / press handling for tap, double-tap, and long-press on the video
       let pendingTapTimeout = null;
       let pendingTapPosition = null;
+      let longPressTimer = null;
+      let longPressStartTime = null;
+      let longPressPosition = null;
+      let suppressNextClickFromLongPress = false;
 
       const configuration = {
         iceServers: [
@@ -913,11 +917,38 @@
         );
       }
 
+      /**
+       * Send a remote long-press gesture at a normalized coordinate.
+       */
+      function sendRemoteLongPress(normalizedX, normalizedY, durationMs) {
+        const envelope = {
+          type: "input",
+          sessionId: null,
+          input: {
+            kind: "longPress",
+            position: { x: normalizedX, y: normalizedY },
+            durationMs: Math.round(durationMs),
+          },
+        };
+        sendRemoteEnvelope(envelope);
+        updateInputStatus(
+          `longPress (${Math.round(durationMs)}ms) @ (${normalizedX.toFixed(
+            3
+          )}, ${normalizedY.toFixed(3)})`
+        );
+      }
+
       // When the support agent clicks on the remote video:
       // - single click → tap
       // - double click (within browser's double-click threshold) → doubleTap
       remoteVideo.addEventListener("click", (event) => {
         try {
+          // If we already fired a long-press for this interaction, skip tap.
+          if (suppressNextClickFromLongPress) {
+            suppressNextClickFromLongPress = false;
+            return;
+          }
+
           const rect = remoteVideo.getBoundingClientRect();
           if (!rect.width || !rect.height) {
             return;
@@ -965,6 +996,60 @@
         } catch (e) {
           log(`❌ Failed to queue remote tap: ${e.message}`, "error");
         }
+      });
+
+      // Mouse press handlers for long-press detection.
+      remoteVideo.addEventListener("mousedown", (event) => {
+        try {
+          const rect = remoteVideo.getBoundingClientRect();
+          if (!rect.width || !rect.height) {
+            return;
+          }
+          const x = (event.clientX - rect.left) / rect.width;
+          const y = (event.clientY - rect.top) / rect.height;
+
+          longPressStartTime = Date.now();
+          longPressPosition = { x, y };
+
+          // Start timer; if it fires, we treat as a long-press.
+          longPressTimer = setTimeout(() => {
+            if (!longPressStartTime || !longPressPosition) {
+              return;
+            }
+            const duration = Date.now() - longPressStartTime;
+            log(
+              `🎮 Remote LONG PRESS at video coords (${x.toFixed(
+                3
+              )}, ${y.toFixed(3)}) for ${duration}ms`,
+              "info"
+            );
+            sendRemoteLongPress(x, y, duration);
+
+            // Prevent the subsequent click from sending a tap.
+            suppressNextClickFromLongPress = true;
+
+            longPressTimer = null;
+          }, 600); // 600ms press threshold
+        } catch (e) {
+          log(`❌ Failed to start long-press detection: ${e.message}`, "error");
+        }
+      });
+
+      function cancelLongPressIfNeeded() {
+        if (longPressTimer) {
+          clearTimeout(longPressTimer);
+          longPressTimer = null;
+        }
+        longPressStartTime = null;
+        longPressPosition = null;
+      }
+
+      remoteVideo.addEventListener("mouseup", () => {
+        cancelLongPressIfNeeded();
+      });
+
+      remoteVideo.addEventListener("mouseleave", () => {
+        cancelLongPressIfNeeded();
       });
 
       // Cleanup on page unload
