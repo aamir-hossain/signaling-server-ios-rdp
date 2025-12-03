@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "/Users/intel-mac-aamir/workspace/dotnet/signaling-server-ios-rdp/signaling-server-ios-rdp.csproj": {}
+    "/Users/m2-mac-amir/workspace/dotnet/signaling-server-ios-rdp/signaling-server-ios-rdp.csproj": {}
   },
   "projects": {
-    "/Users/intel-mac-aamir/workspace/dotnet/signaling-server-ios-rdp/signaling-server-ios-rdp.csproj": {
+    "/Users/m2-mac-amir/workspace/dotnet/signaling-server-ios-rdp/signaling-server-ios-rdp.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/intel-mac-aamir/workspace/dotnet/signaling-server-ios-rdp/signaling-server-ios-rdp.csproj",
+        "projectUniqueName": "/Users/m2-mac-amir/workspace/dotnet/signaling-server-ios-rdp/signaling-server-ios-rdp.csproj",
         "projectName": "signaling-server-ios-rdp",
-        "projectPath": "/Users/intel-mac-aamir/workspace/dotnet/signaling-server-ios-rdp/signaling-server-ios-rdp.csproj",
-        "packagesPath": "/Users/intel-mac-aamir/.nuget/packages/",
-        "outputPath": "/Users/intel-mac-aamir/workspace/dotnet/signaling-server-ios-rdp/obj/",
+        "projectPath": "/Users/m2-mac-amir/workspace/dotnet/signaling-server-ios-rdp/signaling-server-ios-rdp.csproj",
+        "packagesPath": "/Users/m2-mac-amir/.nuget/packages/",
+        "outputPath": "/Users/m2-mac-amir/workspace/dotnet/signaling-server-ios-rdp/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/Users/intel-mac-aamir/.nuget/NuGet/NuGet.Config"
+          "/Users/m2-mac-amir/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
@@ -37,8 +37,7 @@
           "enableAudit": "true",
           "auditLevel": "low",
           "auditMode": "direct"
-        },
-        "SdkAnalysisLevel": "10.0.100"
+        }
       },
       "frameworks": {
         "net8.0": {
@@ -62,7 +61,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/10.0.100/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/8.0.416/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

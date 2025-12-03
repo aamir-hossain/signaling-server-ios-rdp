@@ -149,6 +149,13 @@
         border: 1px solid rgba(234, 179, 8, 0.3);
       }
 
+      .input-status {
+        margin-top: 6px;
+        font-size: 11px;
+        color: #9ca3af;
+        text-align: center;
+      }
+
       /* Logs are now console-only for a cleaner UI */
 
       .config {
@@ -204,6 +211,7 @@
       <div class="video-container">
         <video id="remoteVideo" autoplay playsinline></video>
       </div>
+      <div id="inputStatus" class="input-status">Last input: none</div>
     </div>
 
     <script>
@@ -212,10 +220,15 @@
       let remoteVideo = document.getElementById("remoteVideo");
       let sessionBtn = document.getElementById("sessionBtn");
       let statusDiv = document.getElementById("status");
+      let inputStatusDiv = document.getElementById("inputStatus");
 
       // High-level session state for UI
       // "disconnected" | "connecting" | "connected"
       let sessionState = "disconnected";
+
+      // Click handling for single vs double tap on the video
+      let pendingTapTimeout = null;
+      let pendingTapPosition = null;
 
       const configuration = {
         iceServers: [
@@ -232,6 +245,12 @@
       function updateStatus(status, message) {
         statusDiv.className = `status ${status}`;
         statusDiv.textContent = `Status: ${message}`;
+      }
+
+      function updateInputStatus(message) {
+        if (inputStatusDiv) {
+          inputStatusDiv.textContent = `Last input: ${message}`;
+        }
       }
 
       function updateSessionButton() {
@@ -859,8 +878,7 @@
       }
 
       /**
-       * Example: send a remote "tap" at a normalized coordinate
-       * inside the app, based on a click on the video element.
+       * Send a remote tap-like gesture.
        */
       function sendRemoteTap(normalizedX, normalizedY) {
         const envelope = {
@@ -872,10 +890,32 @@
           },
         };
         sendRemoteEnvelope(envelope);
+        updateInputStatus(
+          `tap @ (${normalizedX.toFixed(3)}, ${normalizedY.toFixed(3)})`
+        );
       }
 
-      // Basic example: when the support agent clicks on the
-      // remote video, send a tap to the iOS app at that point.
+      /**
+       * Send a remote double-tap gesture at a normalized coordinate.
+       */
+      function sendRemoteDoubleTap(normalizedX, normalizedY) {
+        const envelope = {
+          type: "input",
+          sessionId: null,
+          input: {
+            kind: "doubleTap",
+            position: { x: normalizedX, y: normalizedY },
+          },
+        };
+        sendRemoteEnvelope(envelope);
+        updateInputStatus(
+          `doubleTap @ (${normalizedX.toFixed(3)}, ${normalizedY.toFixed(3)})`
+        );
+      }
+
+      // When the support agent clicks on the remote video:
+      // - single click → tap
+      // - double click (within browser's double-click threshold) → doubleTap
       remoteVideo.addEventListener("click", (event) => {
         try {
           const rect = remoteVideo.getBoundingClientRect();
@@ -885,13 +925,45 @@
           const x = (event.clientX - rect.left) / rect.width;
           const y = (event.clientY - rect.top) / rect.height;
 
-          log(
-            `🎮 Remote tap at video coords (${x.toFixed(3)}, ${y.toFixed(3)})`,
-            "info"
-          );
-          sendRemoteTap(x, y);
+          // If this is the second click of a double-click sequence,
+          // treat it as a double tap immediately.
+          if (event.detail === 2) {
+            if (pendingTapTimeout) {
+              clearTimeout(pendingTapTimeout);
+              pendingTapTimeout = null;
+            }
+            log(
+              `🎮 Remote DOUBLE TAP at video coords (${x.toFixed(
+                3
+              )}, ${y.toFixed(3)})`,
+              "info"
+            );
+            sendRemoteDoubleTap(x, y);
+            pendingTapPosition = null;
+            return;
+          }
+
+          // Otherwise, schedule a single tap, which will be cancelled
+          // if a second click arrives (event.detail === 2).
+          pendingTapPosition = { x, y };
+
+          if (pendingTapTimeout) {
+            clearTimeout(pendingTapTimeout);
+          }
+
+          pendingTapTimeout = setTimeout(() => {
+            log(
+              `🎮 Remote tap at video coords (${x.toFixed(3)}, ${y.toFixed(
+                3
+              )})`,
+              "info"
+            );
+            sendRemoteTap(x, y);
+            pendingTapTimeout = null;
+            pendingTapPosition = null;
+          }, 350); // slightly generous window in case of slow double-click
         } catch (e) {
-          log(`❌ Failed to send remote tap: ${e.message}`, "error");
+          log(`❌ Failed to queue remote tap: ${e.message}`, "error");
         }
       });
 
