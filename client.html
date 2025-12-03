@@ -226,13 +226,15 @@
       // "disconnected" | "connecting" | "connected"
       let sessionState = "disconnected";
 
-      // Click / press handling for tap, double-tap, and long-press on the video
+      // Click / press handling for tap, double-tap, long-press, and swipe on the video
       let pendingTapTimeout = null;
       let pendingTapPosition = null;
       let longPressTimer = null;
       let longPressStartTime = null;
       let longPressPosition = null;
       let suppressNextClickFromLongPress = false;
+      let swipeStartPosition = null;
+      let swipeStartTime = null;
 
       const configuration = {
         iceServers: [
@@ -938,6 +940,61 @@
         );
       }
 
+      /**
+       * Send a remote swipe gesture between two normalized points.
+       */
+      function sendRemoteSwipe(startX, startY, endX, endY) {
+        const dx = endX - startX;
+        const dy = endY - startY;
+
+        const envelope = {
+          type: "input",
+          sessionId: null,
+          input: {
+            kind: "swipe",
+            start: { x: startX, y: startY },
+            end: { x: endX, y: endY },
+            deltaX: dx,
+            deltaY: dy,
+          },
+        };
+
+        sendRemoteEnvelope(envelope);
+        updateInputStatus(
+          `swipe Δ(${dx.toFixed(3)}, ${dy.toFixed(3)}) from (${startX.toFixed(
+            3
+          )}, ${startY.toFixed(3)})`
+        );
+      }
+
+      /**
+       * Send a remote pan / drag gesture between two normalized points.
+       */
+      function sendRemotePan(startX, startY, endX, endY, durationMs) {
+        const dx = endX - startX;
+        const dy = endY - startY;
+
+        const envelope = {
+          type: "input",
+          sessionId: null,
+          input: {
+            kind: "pan",
+            start: { x: startX, y: startY },
+            end: { x: endX, y: endY },
+            deltaX: dx,
+            deltaY: dy,
+            durationMs: Math.round(durationMs),
+          },
+        };
+
+        sendRemoteEnvelope(envelope);
+        updateInputStatus(
+          `pan Δ(${dx.toFixed(3)}, ${dy.toFixed(3)}) from (${startX.toFixed(
+            3
+          )}, ${startY.toFixed(3)})`
+        );
+      }
+
       // When the support agent clicks on the remote video:
       // - single click → tap
       // - double click (within browser's double-click threshold) → doubleTap
@@ -1010,6 +1067,8 @@
 
           longPressStartTime = Date.now();
           longPressPosition = { x, y };
+          swipeStartTime = longPressStartTime;
+          swipeStartPosition = { x, y };
 
           // Start timer; if it fires, we treat as a long-press.
           longPressTimer = setTimeout(() => {
@@ -1044,7 +1103,75 @@
         longPressPosition = null;
       }
 
-      remoteVideo.addEventListener("mouseup", () => {
+      function maybeSendSwipe(event) {
+        try {
+          if (!swipeStartTime || !swipeStartPosition) {
+            return;
+          }
+
+          const rect = remoteVideo.getBoundingClientRect();
+          if (!rect.width || !rect.height) {
+            return;
+          }
+
+          const endX = (event.clientX - rect.left) / rect.width;
+          const endY = (event.clientY - rect.top) / rect.height;
+
+          const dx = endX - swipeStartPosition.x;
+          const dy = endY - swipeStartPosition.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          const duration = Date.now() - swipeStartTime;
+
+          // Thresholds: distinguish fast long gestures (swipe) from slower drags (pan)
+          const minSwipeDistance = 0.08; // ~8% of view
+          const minPanDistance = 0.03; // smaller threshold for pan
+          const maxSwipeDuration = 600; // ms (same ballpark as long-press threshold)
+
+          if (distance >= minSwipeDistance && duration <= maxSwipeDuration) {
+            log(
+              `🎮 Remote SWIPE from (${swipeStartPosition.x.toFixed(
+                3
+              )}, ${swipeStartPosition.y.toFixed(3)}) to (${endX.toFixed(
+                3
+              )}, ${endY.toFixed(3)})`,
+              "info"
+            );
+            sendRemoteSwipe(
+              swipeStartPosition.x,
+              swipeStartPosition.y,
+              endX,
+              endY
+            );
+            // Prevent the subsequent click from sending a tap.
+            suppressNextClickFromLongPress = true;
+          } else if (distance >= minPanDistance) {
+            log(
+              `🎮 Remote PAN from (${swipeStartPosition.x.toFixed(
+                3
+              )}, ${swipeStartPosition.y.toFixed(3)}) to (${endX.toFixed(
+                3
+              )}, ${endY.toFixed(3)})`,
+              "info"
+            );
+            sendRemotePan(
+              swipeStartPosition.x,
+              swipeStartPosition.y,
+              endX,
+              endY,
+              duration
+            );
+            suppressNextClickFromLongPress = true;
+          }
+        } catch (e) {
+          log(`❌ Failed to send swipe/pan: ${e.message}`, "error");
+        } finally {
+          swipeStartTime = null;
+          swipeStartPosition = null;
+        }
+      }
+
+      remoteVideo.addEventListener("mouseup", (event) => {
+        maybeSendSwipe(event);
         cancelLongPressIfNeeded();
       });
 
