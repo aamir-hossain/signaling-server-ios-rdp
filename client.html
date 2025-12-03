@@ -156,6 +156,45 @@
         text-align: center;
       }
 
+      .keyboard-panel {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid #1f2937;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .keyboard-row {
+        display: flex;
+        gap: 6px;
+      }
+
+      .keyboard-input {
+        flex: 1;
+        padding: 6px 8px;
+        border-radius: 6px;
+        border: 1px solid #374151;
+        background: #020617;
+        color: #e5e7eb;
+        font-size: 12px;
+      }
+
+      .keyboard-input:focus {
+        outline: none;
+        border-color: #10b981;
+      }
+
+      .keyboard-key-btn {
+        padding: 6px 10px;
+        border-radius: 6px;
+        border: 1px solid #374151;
+        background: #1f2937;
+        color: #e5e7eb;
+        font-size: 11px;
+        min-width: auto;
+      }
+
       /* Logs are now console-only for a cleaner UI */
 
       .config {
@@ -212,6 +251,46 @@
         <video id="remoteVideo" autoplay playsinline></video>
       </div>
       <div id="inputStatus" class="input-status">Last input: none</div>
+      <div class="keyboard-panel">
+        <div class="keyboard-row">
+          <input
+            type="text"
+            id="kbText"
+            class="keyboard-input"
+            placeholder="Type text to send to device..."
+          />
+          <button
+            class="keyboard-key-btn"
+            type="button"
+            onclick="sendKeyboardTextFromInput()"
+          >
+            Send
+          </button>
+        </div>
+        <div class="keyboard-row">
+          <button
+            class="keyboard-key-btn"
+            type="button"
+            onclick="sendRemoteKeyboardKey('enter')"
+          >
+            Enter
+          </button>
+          <button
+            class="keyboard-key-btn"
+            type="button"
+            onclick="sendRemoteKeyboardKey('backspace')"
+          >
+            Backspace
+          </button>
+          <button
+            class="keyboard-key-btn"
+            type="button"
+            onclick="sendRemoteKeyboardKey('tab')"
+          >
+            Tab
+          </button>
+        </div>
+      </div>
     </div>
 
     <script>
@@ -995,6 +1074,44 @@
         );
       }
 
+      /**
+       * Keyboard helpers
+       */
+      function sendRemoteKeyboardText(text) {
+        if (!text || !text.trim()) return;
+        const envelope = {
+          type: "input",
+          sessionId: null,
+          input: {
+            kind: "keyboardText",
+            text: text,
+          },
+        };
+        sendRemoteEnvelope(envelope);
+        updateInputStatus(`keyboardText "${text}"`);
+      }
+
+      function sendRemoteKeyboardKey(keyCode) {
+        const envelope = {
+          type: "input",
+          sessionId: null,
+          input: {
+            kind: "keyboardKey",
+            keyCode: keyCode,
+          },
+        };
+        sendRemoteEnvelope(envelope);
+        updateInputStatus(`keyboardKey ${keyCode}`);
+      }
+
+      function sendKeyboardTextFromInput() {
+        const kbInput = document.getElementById("kbText");
+        if (!kbInput) return;
+        const text = kbInput.value;
+        sendRemoteKeyboardText(text);
+        kbInput.value = "";
+      }
+
       // When the support agent clicks on the remote video:
       // - single click → tap
       // - double click (within browser's double-click threshold) → doubleTap
@@ -1178,6 +1295,17 @@
       remoteVideo.addEventListener("mouseleave", () => {
         cancelLongPressIfNeeded();
       });
+
+      // Keyboard input: submit on Enter (without Shift).
+      const kbInputEl = document.getElementById("kbText");
+      if (kbInputEl) {
+        kbInputEl.addEventListener("keydown", (event) => {
+          if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            sendKeyboardTextFromInput();
+          }
+        });
+      }
 
       // Cleanup on page unload
       window.addEventListener("beforeunload", () => {
