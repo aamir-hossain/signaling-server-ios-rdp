@@ -82,8 +82,22 @@ app.Map("/ws", async context =>
                     Console.WriteLine($"📋 ICE Candidate present");
                 }
 
-                // Route message to other connected clients (browser)
-                // In production, implement proper session pairing
+                // Optional: log remote-control style messages (input/command/diagnostics)
+                if (message.TryGetProperty("input", out var inputElement) && inputElement.ValueKind != JsonValueKind.Null)
+                {
+                    Console.WriteLine("🎮 Remote input payload present");
+                }
+                if (message.TryGetProperty("command", out var commandElement) && commandElement.ValueKind != JsonValueKind.Null)
+                {
+                    Console.WriteLine("🧭 Remote command payload present");
+                }
+                if (message.TryGetProperty("diagnostics", out var diagElement) && diagElement.ValueKind != JsonValueKind.Null)
+                {
+                    Console.WriteLine("🩺 Diagnostics payload present");
+                }
+
+                // Route message to other connected clients (browser/app/broadcast)
+                // In production, implement proper session pairing / roles
                 int forwardedCount = 0;
                 foreach (var (id, ws) in connections)
                 {

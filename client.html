@@ -844,6 +844,57 @@
         log("✅ Disconnected", "success");
       }
 
+      // ============================
+      // Remote control helpers
+      // ============================
+
+      /**
+       * Send a RemoteMessageEnvelope for input/command/diagnostics
+       * over the same WebSocket. The iOS main app will decode these
+       * and map them into in-app gestures / commands / diagnostics.
+       */
+      function sendRemoteEnvelope(envelope) {
+        // Reuse the existing signaling sender for convenience
+        sendSignalingMessage(envelope);
+      }
+
+      /**
+       * Example: send a remote "tap" at a normalized coordinate
+       * inside the app, based on a click on the video element.
+       */
+      function sendRemoteTap(normalizedX, normalizedY) {
+        const envelope = {
+          type: "input",
+          sessionId: null,
+          input: {
+            kind: "tap",
+            position: { x: normalizedX, y: normalizedY },
+          },
+        };
+        sendRemoteEnvelope(envelope);
+      }
+
+      // Basic example: when the support agent clicks on the
+      // remote video, send a tap to the iOS app at that point.
+      remoteVideo.addEventListener("click", (event) => {
+        try {
+          const rect = remoteVideo.getBoundingClientRect();
+          if (!rect.width || !rect.height) {
+            return;
+          }
+          const x = (event.clientX - rect.left) / rect.width;
+          const y = (event.clientY - rect.top) / rect.height;
+
+          log(
+            `🎮 Remote tap at video coords (${x.toFixed(3)}, ${y.toFixed(3)})`,
+            "info"
+          );
+          sendRemoteTap(x, y);
+        } catch (e) {
+          log(`❌ Failed to send remote tap: ${e.message}`, "error");
+        }
+      });
+
       // Cleanup on page unload
       window.addEventListener("beforeunload", () => {
         disconnect();
