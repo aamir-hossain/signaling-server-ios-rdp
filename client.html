@@ -546,21 +546,29 @@
               log("✅ WebRTC connection established!", "success");
               log("📹 Ready to receive video stream", "success");
               updateStatus("connected", "Connected - Receiving video");
+              sessionState = "connected";
+              updateSessionButton();
               break;
             case "disconnected":
               log("⚠️ ========== WEBRTC DISCONNECTED ==========", "warning");
               log("⚠️ WebRTC connection lost", "warning");
               updateStatus("disconnected", "Disconnected");
+              sessionState = "disconnected";
+              updateSessionButton();
               break;
             case "failed":
               log("❌ ========== WEBRTC FAILED ==========", "error");
               log("❌ WebRTC connection failed", "error");
               updateStatus("disconnected", "Connection failed");
+              sessionState = "disconnected";
+              updateSessionButton();
               break;
             case "closed":
               log("🔌 ========== WEBRTC CLOSED ==========", "warning");
               log("🔌 WebRTC connection closed", "warning");
               updateStatus("disconnected", "Connection closed");
+              sessionState = "disconnected";
+              updateSessionButton();
               break;
           }
         };
@@ -948,6 +956,31 @@
         log("✅ Disconnected", "success");
       }
 
+      // Whether remote input / commands should be allowed to flow
+      // Only when the session is connected AND WebRTC is in a connected state.
+      function isRemoteInputAllowed() {
+        if (sessionState !== "connected") {
+          log(
+            `⚠️ Remote input blocked: sessionState=${sessionState} (expected "connected")`,
+            "warning"
+          );
+          return false;
+        }
+        if (!peerConnection) {
+          log("⚠️ Remote input blocked: peerConnection is null", "warning");
+          return false;
+        }
+        const pcState = peerConnection.connectionState;
+        if (pcState !== "connected") {
+          log(
+            `⚠️ Remote input blocked: WebRTC state=${pcState} (expected "connected")`,
+            "warning"
+          );
+          return false;
+        }
+        return true;
+      }
+
       // ============================
       // Remote control helpers
       // ============================
@@ -958,6 +991,11 @@
        * and map them into in-app gestures / commands / diagnostics.
        */
       function sendRemoteEnvelope(envelope) {
+        // Guard: only send remote input when the session + WebRTC are connected.
+        if (!isRemoteInputAllowed()) {
+          updateInputStatus("ignored (not connected)");
+          return;
+        }
         // Reuse the existing signaling sender for convenience
         sendSignalingMessage(envelope);
       }
