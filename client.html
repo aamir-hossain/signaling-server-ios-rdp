@@ -16,11 +16,14 @@
           Oxygen, Ubuntu, Cantarell, sans-serif;
         background: #05070b;
         color: #e5e7eb;
+        background: #05070b;
+        color: #e5e7eb;
         min-height: 100vh;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
+        padding: 16px;
         padding: 16px;
       }
 
@@ -29,21 +32,33 @@
         border-radius: 12px;
         padding: 16px 18px 18px;
         max-width: 520px;
+        background: #111827;
+        border-radius: 12px;
+        padding: 16px 18px 18px;
+        max-width: 520px;
         width: 100%;
+        border: 1px solid #1f2937;
         border: 1px solid #1f2937;
       }
 
       h1 {
         color: #e5e7eb;
         margin-bottom: 6px;
+        color: #e5e7eb;
+        margin-bottom: 6px;
         text-align: center;
+        font-size: 18px;
+        font-weight: 600;
         font-size: 18px;
         font-weight: 600;
       }
 
       .subtitle {
         color: #9ca3af;
+        color: #9ca3af;
         text-align: center;
+        margin-bottom: 16px;
+        font-size: 13px;
         margin-bottom: 16px;
         font-size: 13px;
       }
@@ -52,18 +67,24 @@
         display: flex;
         gap: 10px;
         margin-bottom: 12px;
+        margin-bottom: 12px;
         flex-wrap: wrap;
+        justify-content: center;
         justify-content: center;
       }
 
       button {
         padding: 6px 14px;
+        padding: 6px 14px;
         border: none;
         border-radius: 8px;
         font-size: 13px;
         font-weight: 500;
+        font-size: 13px;
+        font-weight: 500;
         cursor: pointer;
         transition: all 0.3s;
+        min-width: 110px;
         min-width: 110px;
       }
 
@@ -79,6 +100,8 @@
       .btn-connect {
         background: #10b981;
         color: #0b1120;
+        background: #10b981;
+        color: #0b1120;
       }
 
       .btn-connect:hover {
@@ -86,6 +109,8 @@
       }
 
       .btn-disconnect {
+        background: #ef4444;
+        color: #f9fafb;
         background: #ef4444;
         color: #f9fafb;
       }
@@ -103,9 +128,16 @@
         position: relative;
         width: 100%;
         max-width: 420px; /* Phone-like frame, prevents huge scaling */
+        max-width: 420px; /* Phone-like frame, prevents huge scaling */
         background: #000;
         border-radius: 8px;
         overflow: hidden;
+        /* Portrait aspect to match iPhone screen and avoid overflow */
+        aspect-ratio: 9 / 19.5;
+        margin: 6px auto 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         /* Portrait aspect to match iPhone screen and avoid overflow */
         aspect-ratio: 9 / 19.5;
         margin: 6px auto 0;
@@ -117,7 +149,11 @@
       #remoteVideo {
         max-width: 100%;
         max-height: 100%;
+        max-width: 100%;
+        max-height: 100%;
         width: 100%;
+        height: 100%;
+        object-fit: contain; /* Show full iOS screen without clipping */
         height: 100%;
         object-fit: contain; /* Show full iOS screen without clipping */
         display: block;
@@ -125,9 +161,12 @@
 
       .status {
         padding: 8px 10px;
+        padding: 8px 10px;
         border-radius: 8px;
         margin-bottom: 8px;
+        margin-bottom: 8px;
         font-weight: 500;
+        font-size: 12px;
         font-size: 12px;
       }
 
@@ -135,9 +174,15 @@
         background: rgba(16, 185, 129, 0.15);
         color: #6ee7b7;
         border: 1px solid rgba(16, 185, 129, 0.3);
+        background: rgba(16, 185, 129, 0.15);
+        color: #6ee7b7;
+        border: 1px solid rgba(16, 185, 129, 0.3);
       }
 
       .status.disconnected {
+        background: rgba(239, 68, 68, 0.15);
+        color: #fecaca;
+        border: 1px solid rgba(239, 68, 68, 0.3);
         background: rgba(239, 68, 68, 0.15);
         color: #fecaca;
         border: 1px solid rgba(239, 68, 68, 0.3);
@@ -149,11 +194,73 @@
         border: 1px solid rgba(234, 179, 8, 0.3);
       }
 
+      .input-status {
+        margin-top: 6px;
+        font-size: 11px;
+        color: #9ca3af;
+        text-align: center;
+      }
+
+      .keyboard-panel {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid #1f2937;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .keyboard-row {
+        display: flex;
+        gap: 6px;
+      }
+
+      .nav-panel {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid #1f2937;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .nav-row {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      .keyboard-input {
+        flex: 1;
+        padding: 6px 8px;
+        border-radius: 6px;
+        border: 1px solid #374151;
+        background: #020617;
+        color: #e5e7eb;
+        font-size: 12px;
+      }
+
+      .keyboard-input:focus {
+        outline: none;
+        border-color: #10b981;
+      }
+
+      .keyboard-key-btn {
+        padding: 6px 10px;
+        border-radius: 6px;
+        border: 1px solid #374151;
+        background: #1f2937;
+        color: #e5e7eb;
+        font-size: 11px;
+        min-width: auto;
+      }
+
       /* Logs are now console-only for a cleaner UI */
 
       .config {
         display: flex;
         gap: 10px;
+        margin-bottom: 12px;
         margin-bottom: 12px;
         flex-wrap: wrap;
       }
@@ -162,15 +269,21 @@
         flex: 1;
         padding: 8px;
         border: 1px solid #374151;
+        padding: 8px;
+        border: 1px solid #374151;
         border-radius: 8px;
         font-size: 13px;
+        font-size: 13px;
         min-width: 200px;
+        background: #020617;
+        color: #e5e7eb;
         background: #020617;
         color: #e5e7eb;
       }
 
       input:focus {
         outline: none;
+        border-color: #10b981;
         border-color: #10b981;
       }
     </style>
@@ -194,8 +307,11 @@
           class="btn-connect"
           id="sessionBtn"
           onclick="onSessionButtonClick()"
+          class="btn-connect"
+          id="sessionBtn"
+          onclick="onSessionButtonClick()"
         >
-          Start Session
+          Start Session Start Session
         </button>
       </div>
 
@@ -203,6 +319,88 @@
 
       <div class="video-container">
         <video id="remoteVideo" autoplay playsinline></video>
+      </div>
+      <div id="inputStatus" class="input-status">Last input: none</div>
+      <div class="keyboard-panel">
+        <div class="keyboard-row">
+          <input
+            type="text"
+            id="kbText"
+            class="keyboard-input"
+            placeholder="Type text to send to device..."
+          />
+          <button
+            class="keyboard-key-btn"
+            type="button"
+            onclick="sendKeyboardTextFromInput()"
+          >
+            Send
+          </button>
+        </div>
+        <div class="keyboard-row">
+          <button
+            class="keyboard-key-btn"
+            type="button"
+            onclick="sendRemoteKeyboardKey('enter')"
+          >
+            Enter
+          </button>
+          <button
+            class="keyboard-key-btn"
+            type="button"
+            onclick="sendRemoteKeyboardKey('backspace')"
+          >
+            Backspace
+          </button>
+          <button
+            class="keyboard-key-btn"
+            type="button"
+            onclick="sendRemoteKeyboardKey('tab')"
+          >
+            Tab
+          </button>
+        </div>
+      </div>
+      <div class="nav-panel">
+        <div class="nav-row">
+          <button
+            class="keyboard-key-btn"
+            type="button"
+            onclick="sendOpenScreen('home')"
+          >
+            Open Home
+          </button>
+          <button
+            class="keyboard-key-btn"
+            type="button"
+            onclick="sendOpenScreen('panTest')"
+          >
+            Open Pan Test
+          </button>
+          <button
+            class="keyboard-key-btn"
+            type="button"
+            onclick="sendOpenScreen('keyboardTest')"
+          >
+            Open Keyboard Test
+          </button>
+        </div>
+        <div class="nav-row">
+          <button
+            class="keyboard-key-btn"
+            type="button"
+            onclick="sendPopScreen()"
+          >
+            Pop Screen
+          </button>
+          <button
+            class="keyboard-key-btn"
+            type="button"
+            onclick="sendPopToRoot()"
+          >
+            Pop To Root
+          </button>
+        </div>
       </div>
     </div>
 
@@ -212,10 +410,21 @@
       let remoteVideo = document.getElementById("remoteVideo");
       let sessionBtn = document.getElementById("sessionBtn");
       let statusDiv = document.getElementById("status");
+      let inputStatusDiv = document.getElementById("inputStatus");
 
       // High-level session state for UI
       // "disconnected" | "connecting" | "connected"
       let sessionState = "disconnected";
+
+      // Click / press handling for tap, double-tap, long-press, and swipe on the video
+      let pendingTapTimeout = null;
+      let pendingTapPosition = null;
+      let longPressTimer = null;
+      let longPressStartTime = null;
+      let longPressPosition = null;
+      let suppressNextClickFromLongPress = false;
+      let swipeStartPosition = null;
+      let swipeStartTime = null;
 
       const configuration = {
         iceServers: [
@@ -227,11 +436,19 @@
       function log(message, type = "info") {
         // Console-only logging for a clean UI
         console.log(`[${type}] ${message}`);
+        // Console-only logging for a clean UI
+        console.log(`[${type}] ${message}`);
       }
 
       function updateStatus(status, message) {
         statusDiv.className = `status ${status}`;
         statusDiv.textContent = `Status: ${message}`;
+      }
+
+      function updateInputStatus(message) {
+        if (inputStatusDiv) {
+          inputStatusDiv.textContent = `Last input: ${message}`;
+        }
       }
 
       function updateSessionButton() {
@@ -442,21 +659,29 @@
               log("✅ WebRTC connection established!", "success");
               log("📹 Ready to receive video stream", "success");
               updateStatus("connected", "Connected - Receiving video");
+              sessionState = "connected";
+              updateSessionButton();
               break;
             case "disconnected":
               log("⚠️ ========== WEBRTC DISCONNECTED ==========", "warning");
               log("⚠️ WebRTC connection lost", "warning");
               updateStatus("disconnected", "Disconnected");
+              sessionState = "disconnected";
+              updateSessionButton();
               break;
             case "failed":
               log("❌ ========== WEBRTC FAILED ==========", "error");
               log("❌ WebRTC connection failed", "error");
               updateStatus("disconnected", "Connection failed");
+              sessionState = "disconnected";
+              updateSessionButton();
               break;
             case "closed":
               log("🔌 ========== WEBRTC CLOSED ==========", "warning");
               log("🔌 WebRTC connection closed", "warning");
               updateStatus("disconnected", "Connection closed");
+              sessionState = "disconnected";
+              updateSessionButton();
               break;
           }
         };
@@ -842,6 +1067,423 @@
         updateSessionButton();
 
         log("✅ Disconnected", "success");
+      }
+
+      // Whether remote input / commands should be allowed to flow
+      // Only when the session is connected AND WebRTC is in a connected state.
+      function isRemoteInputAllowed() {
+        if (sessionState !== "connected") {
+          log(
+            `⚠️ Remote input blocked: sessionState=${sessionState} (expected "connected")`,
+            "warning"
+          );
+          return false;
+        }
+        if (!peerConnection) {
+          log("⚠️ Remote input blocked: peerConnection is null", "warning");
+          return false;
+        }
+        const pcState = peerConnection.connectionState;
+        if (pcState !== "connected") {
+          log(
+            `⚠️ Remote input blocked: WebRTC state=${pcState} (expected "connected")`,
+            "warning"
+          );
+          return false;
+        }
+        return true;
+      }
+
+      // ============================
+      // Remote control helpers
+      // ============================
+
+      /**
+       * Send a RemoteMessageEnvelope for input/command/diagnostics
+       * over the same WebSocket. The iOS main app will decode these
+       * and map them into in-app gestures / commands / diagnostics.
+       */
+      function sendRemoteEnvelope(envelope) {
+        // Guard: only send remote input when the session + WebRTC are connected.
+        if (!isRemoteInputAllowed()) {
+          updateInputStatus("ignored (not connected)");
+          return;
+        }
+        // Reuse the existing signaling sender for convenience
+        sendSignalingMessage(envelope);
+      }
+
+      /**
+       * Send a remote tap-like gesture.
+       */
+      function sendRemoteTap(normalizedX, normalizedY) {
+        const envelope = {
+          type: "input",
+          sessionId: null,
+          input: {
+            kind: "tap",
+            position: { x: normalizedX, y: normalizedY },
+          },
+        };
+        sendRemoteEnvelope(envelope);
+        updateInputStatus(
+          `tap @ (${normalizedX.toFixed(3)}, ${normalizedY.toFixed(3)})`
+        );
+      }
+
+      /**
+       * Send a remote double-tap gesture at a normalized coordinate.
+       */
+      function sendRemoteDoubleTap(normalizedX, normalizedY) {
+        const envelope = {
+          type: "input",
+          sessionId: null,
+          input: {
+            kind: "doubleTap",
+            position: { x: normalizedX, y: normalizedY },
+          },
+        };
+        sendRemoteEnvelope(envelope);
+        updateInputStatus(
+          `doubleTap @ (${normalizedX.toFixed(3)}, ${normalizedY.toFixed(3)})`
+        );
+      }
+
+      /**
+       * Send a remote long-press gesture at a normalized coordinate.
+       */
+      function sendRemoteLongPress(normalizedX, normalizedY, durationMs) {
+        const envelope = {
+          type: "input",
+          sessionId: null,
+          input: {
+            kind: "longPress",
+            position: { x: normalizedX, y: normalizedY },
+            durationMs: Math.round(durationMs),
+          },
+        };
+        sendRemoteEnvelope(envelope);
+        updateInputStatus(
+          `longPress (${Math.round(durationMs)}ms) @ (${normalizedX.toFixed(
+            3
+          )}, ${normalizedY.toFixed(3)})`
+        );
+      }
+
+      /**
+       * Send a remote swipe gesture between two normalized points.
+       */
+      function sendRemoteSwipe(startX, startY, endX, endY) {
+        const dx = endX - startX;
+        const dy = endY - startY;
+
+        const envelope = {
+          type: "input",
+          sessionId: null,
+          input: {
+            kind: "swipe",
+            start: { x: startX, y: startY },
+            end: { x: endX, y: endY },
+            deltaX: dx,
+            deltaY: dy,
+          },
+        };
+
+        sendRemoteEnvelope(envelope);
+        updateInputStatus(
+          `swipe Δ(${dx.toFixed(3)}, ${dy.toFixed(3)}) from (${startX.toFixed(
+            3
+          )}, ${startY.toFixed(3)})`
+        );
+      }
+
+      /**
+       * Send a remote pan / drag gesture between two normalized points.
+       */
+      function sendRemotePan(startX, startY, endX, endY, durationMs) {
+        const dx = endX - startX;
+        const dy = endY - startY;
+
+        const envelope = {
+          type: "input",
+          sessionId: null,
+          input: {
+            kind: "pan",
+            start: { x: startX, y: startY },
+            end: { x: endX, y: endY },
+            deltaX: dx,
+            deltaY: dy,
+            durationMs: Math.round(durationMs),
+          },
+        };
+
+        sendRemoteEnvelope(envelope);
+        updateInputStatus(
+          `pan Δ(${dx.toFixed(3)}, ${dy.toFixed(3)}) from (${startX.toFixed(
+            3
+          )}, ${startY.toFixed(3)})`
+        );
+      }
+
+      /**
+       * Keyboard helpers
+       */
+      function sendRemoteKeyboardText(text) {
+        if (!text || !text.trim()) return;
+        const envelope = {
+          type: "input",
+          sessionId: null,
+          input: {
+            kind: "keyboardText",
+            text: text,
+          },
+        };
+        sendRemoteEnvelope(envelope);
+        updateInputStatus(`keyboardText "${text}"`);
+      }
+
+      function sendRemoteKeyboardKey(keyCode) {
+        const envelope = {
+          type: "input",
+          sessionId: null,
+          input: {
+            kind: "keyboardKey",
+            keyCode: keyCode,
+          },
+        };
+        sendRemoteEnvelope(envelope);
+        updateInputStatus(`keyboardKey ${keyCode}`);
+      }
+
+      function sendKeyboardTextFromInput() {
+        const kbInput = document.getElementById("kbText");
+        if (!kbInput) return;
+        const text = kbInput.value;
+        sendRemoteKeyboardText(text);
+        kbInput.value = "";
+      }
+
+      /**
+       * Navigation command helpers
+       */
+      function sendRemoteCommand(type, parameters) {
+        const envelope = {
+          type: "command",
+          sessionId: null,
+          command: {
+            type: type,
+            parameters: parameters || null,
+          },
+        };
+        sendRemoteEnvelope(envelope);
+        updateInputStatus(`command ${type}`);
+      }
+
+      function sendOpenScreen(screenId) {
+        sendRemoteCommand("openScreen", { screen: screenId });
+      }
+
+      function sendPopScreen() {
+        sendRemoteCommand("popScreen", null);
+      }
+
+      function sendPopToRoot() {
+        sendRemoteCommand("popToRoot", null);
+      }
+
+      // When the support agent clicks on the remote video:
+      // - single click → tap
+      // - double click (within browser's double-click threshold) → doubleTap
+      remoteVideo.addEventListener("click", (event) => {
+        try {
+          // If we already fired a long-press for this interaction, skip tap.
+          if (suppressNextClickFromLongPress) {
+            suppressNextClickFromLongPress = false;
+            return;
+          }
+
+          const rect = remoteVideo.getBoundingClientRect();
+          if (!rect.width || !rect.height) {
+            return;
+          }
+          const x = (event.clientX - rect.left) / rect.width;
+          const y = (event.clientY - rect.top) / rect.height;
+
+          // If this is the second click of a double-click sequence,
+          // treat it as a double tap immediately.
+          if (event.detail === 2) {
+            if (pendingTapTimeout) {
+              clearTimeout(pendingTapTimeout);
+              pendingTapTimeout = null;
+            }
+            log(
+              `🎮 Remote DOUBLE TAP at video coords (${x.toFixed(
+                3
+              )}, ${y.toFixed(3)})`,
+              "info"
+            );
+            sendRemoteDoubleTap(x, y);
+            pendingTapPosition = null;
+            return;
+          }
+
+          // Otherwise, schedule a single tap, which will be cancelled
+          // if a second click arrives (event.detail === 2).
+          pendingTapPosition = { x, y };
+
+          if (pendingTapTimeout) {
+            clearTimeout(pendingTapTimeout);
+          }
+
+          pendingTapTimeout = setTimeout(() => {
+            log(
+              `🎮 Remote tap at video coords (${x.toFixed(3)}, ${y.toFixed(
+                3
+              )})`,
+              "info"
+            );
+            sendRemoteTap(x, y);
+            pendingTapTimeout = null;
+            pendingTapPosition = null;
+          }, 350); // slightly generous window in case of slow double-click
+        } catch (e) {
+          log(`❌ Failed to queue remote tap: ${e.message}`, "error");
+        }
+      });
+
+      // Mouse press handlers for long-press detection.
+      remoteVideo.addEventListener("mousedown", (event) => {
+        try {
+          const rect = remoteVideo.getBoundingClientRect();
+          if (!rect.width || !rect.height) {
+            return;
+          }
+          const x = (event.clientX - rect.left) / rect.width;
+          const y = (event.clientY - rect.top) / rect.height;
+
+          longPressStartTime = Date.now();
+          longPressPosition = { x, y };
+          swipeStartTime = longPressStartTime;
+          swipeStartPosition = { x, y };
+
+          // Start timer; if it fires, we treat as a long-press.
+          longPressTimer = setTimeout(() => {
+            if (!longPressStartTime || !longPressPosition) {
+              return;
+            }
+            const duration = Date.now() - longPressStartTime;
+            log(
+              `🎮 Remote LONG PRESS at video coords (${x.toFixed(
+                3
+              )}, ${y.toFixed(3)}) for ${duration}ms`,
+              "info"
+            );
+            sendRemoteLongPress(x, y, duration);
+
+            // Prevent the subsequent click from sending a tap.
+            suppressNextClickFromLongPress = true;
+
+            longPressTimer = null;
+          }, 600); // 600ms press threshold
+        } catch (e) {
+          log(`❌ Failed to start long-press detection: ${e.message}`, "error");
+        }
+      });
+
+      function cancelLongPressIfNeeded() {
+        if (longPressTimer) {
+          clearTimeout(longPressTimer);
+          longPressTimer = null;
+        }
+        longPressStartTime = null;
+        longPressPosition = null;
+      }
+
+      function maybeSendSwipe(event) {
+        try {
+          if (!swipeStartTime || !swipeStartPosition) {
+            return;
+          }
+
+          const rect = remoteVideo.getBoundingClientRect();
+          if (!rect.width || !rect.height) {
+            return;
+          }
+
+          const endX = (event.clientX - rect.left) / rect.width;
+          const endY = (event.clientY - rect.top) / rect.height;
+
+          const dx = endX - swipeStartPosition.x;
+          const dy = endY - swipeStartPosition.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          const duration = Date.now() - swipeStartTime;
+
+          // Thresholds: distinguish fast long gestures (swipe) from slower drags (pan)
+          const minSwipeDistance = 0.08; // ~8% of view
+          const minPanDistance = 0.03; // smaller threshold for pan
+          const maxSwipeDuration = 600; // ms (same ballpark as long-press threshold)
+
+          if (distance >= minSwipeDistance && duration <= maxSwipeDuration) {
+            log(
+              `🎮 Remote SWIPE from (${swipeStartPosition.x.toFixed(
+                3
+              )}, ${swipeStartPosition.y.toFixed(3)}) to (${endX.toFixed(
+                3
+              )}, ${endY.toFixed(3)})`,
+              "info"
+            );
+            sendRemoteSwipe(
+              swipeStartPosition.x,
+              swipeStartPosition.y,
+              endX,
+              endY
+            );
+            // Prevent the subsequent click from sending a tap.
+            suppressNextClickFromLongPress = true;
+          } else if (distance >= minPanDistance) {
+            log(
+              `🎮 Remote PAN from (${swipeStartPosition.x.toFixed(
+                3
+              )}, ${swipeStartPosition.y.toFixed(3)}) to (${endX.toFixed(
+                3
+              )}, ${endY.toFixed(3)})`,
+              "info"
+            );
+            sendRemotePan(
+              swipeStartPosition.x,
+              swipeStartPosition.y,
+              endX,
+              endY,
+              duration
+            );
+            suppressNextClickFromLongPress = true;
+          }
+        } catch (e) {
+          log(`❌ Failed to send swipe/pan: ${e.message}`, "error");
+        } finally {
+          swipeStartTime = null;
+          swipeStartPosition = null;
+        }
+      }
+
+      remoteVideo.addEventListener("mouseup", (event) => {
+        maybeSendSwipe(event);
+        cancelLongPressIfNeeded();
+      });
+
+      remoteVideo.addEventListener("mouseleave", () => {
+        cancelLongPressIfNeeded();
+      });
+
+      // Keyboard input: submit on Enter (without Shift).
+      const kbInputEl = document.getElementById("kbText");
+      if (kbInputEl) {
+        kbInputEl.addEventListener("keydown", (event) => {
+          if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            sendKeyboardTextFromInput();
+          }
+        });
       }
 
       // Cleanup on page unload

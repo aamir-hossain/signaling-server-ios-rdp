@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("signaling-server-ios-rdp")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+97ea508036de686be5d5bc86ba85d1c5cbadd80a")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a69847a254e75b44b959b5f68676c250572ee5ea")]
 [assembly: System.Reflection.AssemblyProductAttribute("signaling-server-ios-rdp")]
 [assembly: System.Reflection.AssemblyTitleAttribute("signaling-server-ios-rdp")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
