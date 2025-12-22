@@ -16,14 +16,11 @@
           Oxygen, Ubuntu, Cantarell, sans-serif;
         background: #05070b;
         color: #e5e7eb;
-        background: #05070b;
-        color: #e5e7eb;
         min-height: 100vh;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        padding: 16px;
         padding: 16px;
       }
 
@@ -32,33 +29,21 @@
         border-radius: 12px;
         padding: 16px 18px 18px;
         max-width: 520px;
-        background: #111827;
-        border-radius: 12px;
-        padding: 16px 18px 18px;
-        max-width: 520px;
         width: 100%;
-        border: 1px solid #1f2937;
         border: 1px solid #1f2937;
       }
 
       h1 {
         color: #e5e7eb;
         margin-bottom: 6px;
-        color: #e5e7eb;
-        margin-bottom: 6px;
         text-align: center;
-        font-size: 18px;
-        font-weight: 600;
         font-size: 18px;
         font-weight: 600;
       }
 
       .subtitle {
         color: #9ca3af;
-        color: #9ca3af;
         text-align: center;
-        margin-bottom: 16px;
-        font-size: 13px;
         margin-bottom: 16px;
         font-size: 13px;
       }
@@ -67,24 +52,18 @@
         display: flex;
         gap: 10px;
         margin-bottom: 12px;
-        margin-bottom: 12px;
         flex-wrap: wrap;
-        justify-content: center;
         justify-content: center;
       }
 
       button {
         padding: 6px 14px;
-        padding: 6px 14px;
         border: none;
         border-radius: 8px;
         font-size: 13px;
         font-weight: 500;
-        font-size: 13px;
-        font-weight: 500;
         cursor: pointer;
         transition: all 0.3s;
-        min-width: 110px;
         min-width: 110px;
       }
 
@@ -100,8 +79,6 @@
       .btn-connect {
         background: #10b981;
         color: #0b1120;
-        background: #10b981;
-        color: #0b1120;
       }
 
       .btn-connect:hover {
@@ -109,8 +86,6 @@
       }
 
       .btn-disconnect {
-        background: #ef4444;
-        color: #f9fafb;
         background: #ef4444;
         color: #f9fafb;
       }
@@ -128,16 +103,9 @@
         position: relative;
         width: 100%;
         max-width: 420px; /* Phone-like frame, prevents huge scaling */
-        max-width: 420px; /* Phone-like frame, prevents huge scaling */
         background: #000;
         border-radius: 8px;
         overflow: hidden;
-        /* Portrait aspect to match iPhone screen and avoid overflow */
-        aspect-ratio: 9 / 19.5;
-        margin: 6px auto 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
         /* Portrait aspect to match iPhone screen and avoid overflow */
         aspect-ratio: 9 / 19.5;
         margin: 6px auto 0;
@@ -149,11 +117,7 @@
       #remoteVideo {
         max-width: 100%;
         max-height: 100%;
-        max-width: 100%;
-        max-height: 100%;
         width: 100%;
-        height: 100%;
-        object-fit: contain; /* Show full iOS screen without clipping */
         height: 100%;
         object-fit: contain; /* Show full iOS screen without clipping */
         display: block;
@@ -161,12 +125,9 @@
 
       .status {
         padding: 8px 10px;
-        padding: 8px 10px;
         border-radius: 8px;
         margin-bottom: 8px;
-        margin-bottom: 8px;
         font-weight: 500;
-        font-size: 12px;
         font-size: 12px;
       }
 
@@ -174,15 +135,9 @@
         background: rgba(16, 185, 129, 0.15);
         color: #6ee7b7;
         border: 1px solid rgba(16, 185, 129, 0.3);
-        background: rgba(16, 185, 129, 0.15);
-        color: #6ee7b7;
-        border: 1px solid rgba(16, 185, 129, 0.3);
       }
 
       .status.disconnected {
-        background: rgba(239, 68, 68, 0.15);
-        color: #fecaca;
-        border: 1px solid rgba(239, 68, 68, 0.3);
         background: rgba(239, 68, 68, 0.15);
         color: #fecaca;
         border: 1px solid rgba(239, 68, 68, 0.3);
@@ -261,7 +216,6 @@
         display: flex;
         gap: 10px;
         margin-bottom: 12px;
-        margin-bottom: 12px;
         flex-wrap: wrap;
       }
 
@@ -269,21 +223,15 @@
         flex: 1;
         padding: 8px;
         border: 1px solid #374151;
-        padding: 8px;
-        border: 1px solid #374151;
         border-radius: 8px;
         font-size: 13px;
-        font-size: 13px;
         min-width: 200px;
-        background: #020617;
-        color: #e5e7eb;
         background: #020617;
         color: #e5e7eb;
       }
 
       input:focus {
         outline: none;
-        border-color: #10b981;
         border-color: #10b981;
       }
     </style>
@@ -300,6 +248,12 @@
           placeholder="WebSocket URL (e.g., ws://localhost:5050/ws)"
           value="ws://localhost:5050/ws"
         />
+        <input
+          type="text"
+          id="roomId"
+          placeholder="RoomId (e.g., default)"
+          value="default"
+        />
       </div>
 
       <div class="controls">
@@ -307,11 +261,8 @@
           class="btn-connect"
           id="sessionBtn"
           onclick="onSessionButtonClick()"
-          class="btn-connect"
-          id="sessionBtn"
-          onclick="onSessionButtonClick()"
         >
-          Start Session Start Session
+          Start Session
         </button>
       </div>
 
@@ -436,8 +387,6 @@
       function log(message, type = "info") {
         // Console-only logging for a clean UI
         console.log(`[${type}] ${message}`);
-        // Console-only logging for a clean UI
-        console.log(`[${type}] ${message}`);
       }
 
       function updateStatus(status, message) {
@@ -507,17 +456,30 @@
 
       function connectWebSocket() {
         const serverUrl = document.getElementById("serverUrl").value;
+        const roomId = (
+          document.getElementById("roomId")?.value || "default"
+        ).trim();
 
         if (!serverUrl) {
           log("Please enter a WebSocket URL", "error");
+          return;
+        }
+        if (!roomId) {
+          log("Please enter a RoomId", "error");
           return;
         }
 
         log("Connecting to signaling server...", "info");
         updateStatus("connecting", "Connecting...");
 
+        // Append roomId query parameter for session isolation
+        const wsUrl = new URL(serverUrl);
+        if (!wsUrl.searchParams.get("roomId")) {
+          wsUrl.searchParams.set("roomId", roomId);
+        }
+
         // Create WebSocket connection
-        websocket = new WebSocket(serverUrl);
+        websocket = new WebSocket(wsUrl.toString());
 
         websocket.onopen = () => {
           log("✅ ========== WEBSOCKET CONNECTED ==========", "success");
@@ -525,7 +487,7 @@
             "✅ WebSocket connection established with signaling server",
             "success"
           );
-          log(`📊 Status: Connected to ${serverUrl}`, "info");
+          log(`📊 Status: Connected to ${wsUrl.toString()}`, "info");
           updateStatus(
             "connecting",
             "WebSocket connected, waiting for offer..."
@@ -533,6 +495,9 @@
 
           // Create peer connection
           createPeerConnection();
+
+          // Identify this connection to the signaling server for strict 1:1 routing
+          sendSignalingMessage({ type: "hello", role: "web" });
 
           // Request iOS to start streaming (control message)
           sendSignalingMessage({ type: "control", action: "start" });
