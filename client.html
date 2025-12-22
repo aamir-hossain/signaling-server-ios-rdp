@@ -579,12 +579,40 @@
       let swipeStartPosition = null;
       let swipeStartTime = null;
 
-      const configuration = {
+      // WebRTC ICE servers (STUN/TURN).
+      // Loaded dynamically from the signaling server to avoid embedding TURN secrets in this HTML.
+      let configuration = {
         iceServers: [
           { urls: "stun:stun.l.google.com:19302" },
           { urls: "stun:stun1.l.google.com:19302" },
         ],
       };
+
+      function wsToHttpBase(wsUrlString) {
+        try {
+          const u = new URL(wsUrlString);
+          const proto = u.protocol === "wss:" ? "https:" : "http:";
+          return `${proto}//${u.host}`;
+        } catch {
+          return null;
+        }
+      }
+
+      async function loadIceServersFromSignaling(serverWsUrl) {
+        const base = wsToHttpBase(serverWsUrl);
+        if (!base) return null;
+        const url = `${base}/turn/credentials`;
+        try {
+          const res = await fetch(url, { method: "GET" });
+          if (!res.ok) return null;
+          const iceServers = await res.json();
+          if (!Array.isArray(iceServers) || iceServers.length === 0)
+            return null;
+          return iceServers;
+        } catch {
+          return null;
+        }
+      }
 
       function log(message, type = "info") {
         // Console-only logging for a clean UI
@@ -653,7 +681,7 @@
         // Create WebSocket connection
         websocket = new WebSocket(wsUrl.toString());
 
-        websocket.onopen = () => {
+        websocket.onopen = async () => {
           log("✅ ========== WEBSOCKET CONNECTED ==========", "success");
           log(
             "✅ WebSocket connection established with signaling server",
@@ -664,6 +692,18 @@
             "connecting",
             "WebSocket connected, waiting for offer..."
           );
+
+          // Load ICE servers (TURN/STUN) from signaling server if available
+          const dynamicIce = await loadIceServersFromSignaling(serverUrl);
+          if (dynamicIce) {
+            configuration = { ...configuration, iceServers: dynamicIce };
+            log(
+              `🧊 Loaded ${dynamicIce.length} ICE server entries from signaling`,
+              "success"
+            );
+          } else {
+            log("🧊 Using default STUN-only ICE servers", "warning");
+          }
 
           // Create peer connection
           createPeerConnection();
