@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>iOS RDP Web Client</title>
+    <title>ZeroTouch iOS RDP</title>
     <style>
       * {
         margin: 0;
@@ -14,7 +14,7 @@
       body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
           Oxygen, Ubuntu, Cantarell, sans-serif;
-        background: #05070b;
+        background: #000000;
         color: #e5e7eb;
         min-height: 100vh;
         display: flex;
@@ -25,12 +25,12 @@
       }
 
       .container {
-        background: #111827;
+        background: #000000;
         border-radius: 12px;
         padding: 16px 18px 18px;
         max-width: 520px;
         width: 100%;
-        border: 1px solid #1f2937;
+        border: 1px solid #000000;
       }
 
       h1 {
@@ -114,6 +114,51 @@
         justify-content: center;
       }
 
+      .play-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 12px;
+        z-index: 10;
+        cursor: pointer;
+        border-radius: 8px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s;
+      }
+
+      .play-overlay.visible {
+        opacity: 1;
+        pointer-events: all;
+      }
+
+      .play-overlay-icon {
+        width: 64px;
+        height: 64px;
+        background: rgba(16, 185, 129, 0.9);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        color: #0b1120;
+      }
+
+      .play-overlay-text {
+        color: #e5e7eb;
+        font-size: 14px;
+        font-weight: 500;
+        text-align: center;
+        padding: 0 20px;
+      }
+
       #remoteVideo {
         max-width: 100%;
         max-height: 100%;
@@ -190,7 +235,7 @@
         padding: 6px 8px;
         border-radius: 6px;
         border: 1px solid #374151;
-        background: #020617;
+        background: #000000;
         color: #e5e7eb;
         font-size: 12px;
       }
@@ -204,7 +249,7 @@
         padding: 6px 10px;
         border-radius: 6px;
         border: 1px solid #374151;
-        background: #1f2937;
+        background: #000000;
         color: #e5e7eb;
         font-size: 11px;
         min-width: auto;
@@ -226,7 +271,7 @@
         border-radius: 8px;
         font-size: 13px;
         min-width: 200px;
-        background: #020617;
+        background: #000000;
         color: #e5e7eb;
       }
 
@@ -238,38 +283,16 @@
   </head>
   <body>
     <div class="container">
-      <h1>📱 iOS RDP Web Client</h1>
-      <p class="subtitle">Connect to iOS device screen sharing via WebRTC</p>
-
-      <div class="config">
-        <input
-          type="text"
-          id="serverUrl"
-          placeholder="WebSocket URL (e.g., ws://localhost:5050/ws)"
-          value="ws://localhost:5050/ws"
-        />
-        <input
-          type="text"
-          id="roomId"
-          placeholder="RoomId (e.g., default)"
-          value="default"
-        />
-      </div>
-
-      <div class="controls">
-        <button
-          class="btn-connect"
-          id="sessionBtn"
-          onclick="onSessionButtonClick()"
-        >
-          Start Session
-        </button>
-      </div>
+      <h1>ZeroTouch iOS RDP</h1>
 
       <div id="status" class="status disconnected">Status: Disconnected</div>
 
       <div class="video-container">
-        <video id="remoteVideo" autoplay playsinline></video>
+        <video id="remoteVideo" autoplay playsinline muted></video>
+        <div id="playOverlay" class="play-overlay">
+          <div class="play-overlay-icon">▶</div>
+          <div class="play-overlay-text">Click to enable video playback</div>
+        </div>
       </div>
       <div id="inputStatus" class="input-status">Last input: none</div>
       <div class="keyboard-panel">
@@ -313,29 +336,7 @@
         </div>
       </div>
       <div class="nav-panel">
-        <div class="nav-row">
-          <button
-            class="keyboard-key-btn"
-            type="button"
-            onclick="sendOpenScreen('home')"
-          >
-            Open Home
-          </button>
-          <button
-            class="keyboard-key-btn"
-            type="button"
-            onclick="sendOpenScreen('panTest')"
-          >
-            Open Pan Test
-          </button>
-          <button
-            class="keyboard-key-btn"
-            type="button"
-            onclick="sendOpenScreen('keyboardTest')"
-          >
-            Open Keyboard Test
-          </button>
-        </div>
+        <div class="nav-row"></div>
         <div class="nav-row">
           <button
             class="keyboard-key-btn"
@@ -359,7 +360,7 @@
       let peerConnection = null;
       let websocket = null;
       let remoteVideo = document.getElementById("remoteVideo");
-      let sessionBtn = document.getElementById("sessionBtn");
+      let playOverlay = document.getElementById("playOverlay");
       let statusDiv = document.getElementById("status");
       let inputStatusDiv = document.getElementById("inputStatus");
 
@@ -400,39 +401,14 @@
         }
       }
 
+      // Removed updateSessionButton and onSessionButtonClick - no button needed
       function updateSessionButton() {
-        if (!sessionBtn) return;
-        switch (sessionState) {
-          case "disconnected":
-            sessionBtn.textContent = "Start Session";
-            sessionBtn.disabled = false;
-            sessionBtn.className = "btn-connect";
-            break;
-          case "connecting":
-            sessionBtn.textContent = "Starting...";
-            sessionBtn.disabled = true;
-            sessionBtn.className = "btn-connect";
-            break;
-          case "connected":
-            sessionBtn.textContent = "Stop Session";
-            sessionBtn.disabled = false;
-            sessionBtn.className = "btn-disconnect";
-            break;
-        }
-      }
-
-      function onSessionButtonClick() {
-        if (sessionState === "disconnected") {
-          startSession();
-        } else if (sessionState === "connected") {
-          stopSession();
-        }
+        // No-op: button removed
       }
 
       function startSession() {
         if (sessionState !== "disconnected") return;
         sessionState = "connecting";
-        updateSessionButton();
         connectWebSocket();
       }
 
@@ -455,19 +431,14 @@
       }
 
       function connectWebSocket() {
-        const serverUrl = document.getElementById("serverUrl").value;
-        const roomId = (
-          document.getElementById("roomId")?.value || "default"
-        ).trim();
-
-        if (!serverUrl) {
-          log("Please enter a WebSocket URL", "error");
-          return;
-        }
-        if (!roomId) {
-          log("Please enter a RoomId", "error");
-          return;
-        }
+        // Use hardcoded server URL
+        const serverUrl = "ws://localhost:5050/ws";
+        // Read roomId from URL parameter (?room= or ?roomId=), fallback to default
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomId =
+          urlParams.get("room")?.trim() ||
+          urlParams.get("roomId")?.trim() ||
+          "default";
 
         log("Connecting to signaling server...", "info");
         updateStatus("connecting", "Connecting...");
@@ -682,6 +653,13 @@
           log(`📹 Track Kind: ${event.track.kind}`, "info");
           log(`📹 Track Enabled: ${event.track.enabled}`, "info");
           log(`📹 Track Ready State: ${event.track.readyState}`, "info");
+          log(`📹 Track Muted: ${event.track.muted}`, "info");
+
+          // CRITICAL: Explicitly enable the track
+          if (event.track.kind === "video") {
+            event.track.enabled = true;
+            log("✅ [TRACK] Video track explicitly enabled", "success");
+          }
 
           // Set up periodic keyframe requests from receiver side
           // This helps ensure we always have a recent keyframe
@@ -689,6 +667,14 @@
 
           // Set up video element
           remoteVideo.srcObject = event.streams[0];
+          log(
+            `✅ [VIDEO] srcObject set with ${event.streams.length} stream(s)`,
+            "success"
+          );
+
+          // Try playing while muted first (browsers allow muted autoplay more easily)
+          // Then unmute after playback starts
+          attemptVideoPlayMuted();
 
           // Enable the track
           event.track.onunmute = () => {
@@ -760,31 +746,206 @@
               `📹 Video dimensions: ${remoteVideo.videoWidth}x${remoteVideo.videoHeight}`,
               "info"
             );
+            // Try to play when metadata loads
+            attemptVideoPlay();
           };
 
           remoteVideo.onplay = () => {
             log("▶️ Video started playing", "success");
+            // Hide overlay when video starts playing
+            if (playOverlay) {
+              playOverlay.classList.remove("visible");
+            }
           };
+
+          // Show overlay only if all autoplay attempts fail (less aggressive)
+          const checkPlayState = () => {
+            // Only show overlay if video is paused AND all play attempts have been exhausted
+            if (
+              playOverlay &&
+              remoteVideo.readyState >= 2 &&
+              remoteVideo.paused &&
+              videoPlayAttempts >= 5
+            ) {
+              playOverlay.classList.add("visible");
+            } else if (playOverlay && !remoteVideo.paused) {
+              playOverlay.classList.remove("visible");
+            }
+          };
+
+          // Check play state periodically (less frequent)
+          const playStateInterval = setInterval(() => {
+            if (remoteVideo.srcObject) {
+              checkPlayState();
+            } else {
+              clearInterval(playStateInterval);
+            }
+          }, 2000);
+
+          // Also check on loadedmetadata
+          remoteVideo.addEventListener("loadedmetadata", checkPlayState);
 
           remoteVideo.onerror = (error) => {
             log(`❌ Video element error: ${error}`, "error");
           };
 
-          // Try to play
-          remoteVideo
-            .play()
-            .then(() => {
-              log("✅ Video play() called successfully", "success");
-            })
-            .catch((error) => {
-              log(`❌ Video play() failed: ${error.message}`, "error");
-            });
-
           log("✅ Video element updated with remote stream", "success");
           log("📊 Status: Waiting for video to load and play...", "info");
+
+          // Start monitoring video statistics to check if packets are arriving
+          startVideoStatisticsMonitoring(event.track);
         };
 
         log("✅ Peer connection created", "success");
+      }
+
+      // Attempt to play video with multiple retries
+      let videoPlayAttempts = 0;
+      let isUnmuted = false;
+
+      // First try playing muted (browsers allow this more easily)
+      function attemptVideoPlayMuted() {
+        if (!remoteVideo || !remoteVideo.srcObject) return;
+
+        // Ensure video is muted for easier autoplay
+        remoteVideo.muted = true;
+
+        remoteVideo
+          .play()
+          .then(() => {
+            log("✅ Video play() succeeded (muted)", "success");
+            videoPlayAttempts = 0;
+            // Now unmute after playback starts
+            setTimeout(() => {
+              remoteVideo.muted = false;
+              isUnmuted = true;
+              log("✅ Video unmuted after playback started", "success");
+            }, 100);
+            // Hide overlay when play succeeds
+            if (playOverlay) {
+              playOverlay.classList.remove("visible");
+            }
+          })
+          .catch((error) => {
+            log(
+              `⚠️ Video play() (muted) attempt failed: ${error.message}`,
+              "warning"
+            );
+            // If muted play fails, try unmuted
+            attemptVideoPlay();
+          });
+      }
+
+      function attemptVideoPlay() {
+        if (!remoteVideo || !remoteVideo.srcObject) return;
+
+        videoPlayAttempts++;
+        remoteVideo
+          .play()
+          .then(() => {
+            log("✅ Video play() succeeded", "success");
+            videoPlayAttempts = 0; // Reset on success
+            isUnmuted = true;
+            // Hide overlay when play succeeds
+            if (playOverlay) {
+              playOverlay.classList.remove("visible");
+            }
+          })
+          .catch((error) => {
+            log(
+              `⚠️ Video play() attempt ${videoPlayAttempts} failed: ${error.message}`,
+              "warning"
+            );
+            // Retry up to 5 times with increasing delays
+            if (videoPlayAttempts < 5) {
+              setTimeout(() => {
+                if (remoteVideo.paused) {
+                  attemptVideoPlay();
+                }
+              }, 500 * videoPlayAttempts);
+            } else {
+              log(
+                "❌ All video play() attempts failed - showing play overlay",
+                "error"
+              );
+              // Show overlay to prompt user to click
+              if (playOverlay && remoteVideo.readyState >= 2) {
+                playOverlay.classList.add("visible");
+              }
+            }
+          });
+      }
+
+      // Monitor video statistics to check if packets are actually arriving
+      function startVideoStatisticsMonitoring(track) {
+        if (!peerConnection) return;
+
+        const statsInterval = setInterval(async () => {
+          if (!peerConnection || peerConnection.connectionState === "closed") {
+            clearInterval(statsInterval);
+            return;
+          }
+
+          try {
+            const stats = await peerConnection.getStats();
+            let videoBytesReceived = 0;
+            let videoPacketsReceived = 0;
+            let videoFramesDecoded = 0;
+            let videoFramesDropped = 0;
+
+            stats.forEach((report) => {
+              if (
+                report.type === "inbound-rtp" &&
+                report.mediaType === "video"
+              ) {
+                videoBytesReceived = report.bytesReceived || 0;
+                videoPacketsReceived = report.packetsReceived || 0;
+                videoFramesDecoded = report.framesDecoded || 0;
+                videoFramesDropped = report.framesDropped || 0;
+              }
+            });
+
+            // Log statistics every 3 seconds
+            if (videoBytesReceived > 0) {
+              log(
+                `📊 [STATS] Video: ${(videoBytesReceived / 1024).toFixed(
+                  1
+                )} KB received, ` +
+                  `${videoPacketsReceived} packets, ${videoFramesDecoded} frames decoded`,
+                "info"
+              );
+
+              if (videoFramesDropped > 0) {
+                log(
+                  `⚠️ [STATS] ${videoFramesDropped} frames dropped`,
+                  "warning"
+                );
+              }
+
+              // If we're receiving data but track is muted, there's an issue
+              if (track.muted && videoBytesReceived > 0) {
+                log(
+                  "⚠️ [STATS] Track is muted but receiving data - possible decoder issue",
+                  "warning"
+                );
+                // Try to force play
+                attemptVideoPlay();
+              }
+            } else {
+              log(
+                "⚠️ [STATS] No video bytes received - broadcast extension may not be sending frames",
+                "warning"
+              );
+            }
+          } catch (err) {
+            log(`⚠️ [STATS] Error getting stats: ${err.message}`, "warning");
+          }
+        }, 3000); // Every 3 seconds
+
+        // Clear interval after 30 seconds
+        setTimeout(() => {
+          clearInterval(statsInterval);
+        }, 30000);
       }
 
       // Set up periodic keyframe requests from receiver
@@ -1259,7 +1420,37 @@
       // When the support agent clicks on the remote video:
       // - single click → tap
       // - double click (within browser's double-click threshold) → doubleTap
-      remoteVideo.addEventListener("click", (event) => {
+      // Handle overlay click to enable playback
+      if (playOverlay) {
+        playOverlay.addEventListener("click", async (event) => {
+          event.stopPropagation();
+          try {
+            await remoteVideo.play();
+            log("✅ [VIDEO] Playback enabled by overlay click", "success");
+            playOverlay.classList.remove("visible");
+          } catch (err) {
+            log(
+              `⚠️ [VIDEO] play() failed on overlay click: ${err.message}`,
+              "warning"
+            );
+          }
+        });
+      }
+
+      remoteVideo.addEventListener("click", async (event) => {
+        // Enable playback on click if paused (fixes autoplay policy)
+        if (remoteVideo.paused) {
+          try {
+            await remoteVideo.play();
+            log("✅ [VIDEO] Playback enabled by user click", "success");
+            if (playOverlay) {
+              playOverlay.classList.remove("visible");
+            }
+          } catch (err) {
+            log(`⚠️ [VIDEO] play() failed on click: ${err.message}`, "warning");
+          }
+        }
+
         try {
           // If we already fired a long-press for this interaction, skip tap.
           if (suppressNextClickFromLongPress) {
@@ -1459,7 +1650,38 @@
       // Initial log
       sessionState = "disconnected";
       updateSessionButton();
-      log("🚀 Web client ready. Click Start Session to begin.", "info");
+
+      // CRITICAL: Prime autoplay permission immediately on page load
+      // This establishes user gesture context for autoplay (browsers allow this)
+      // We start muted because browsers allow muted autoplay more easily
+      if (remoteVideo) {
+        remoteVideo.muted = true; // Start muted for easier autoplay
+        remoteVideo.play().catch((err) => {
+          // This will fail, but it primes the autoplay permission
+          log(
+            "🔓 [AUTOPLAY] Priming autoplay permission (expected to fail initially)",
+            "info"
+          );
+        });
+      }
+
+      // Check if roomId is in URL and auto-connect
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlRoomId =
+        urlParams.get("room")?.trim() || urlParams.get("roomId")?.trim();
+
+      if (urlRoomId) {
+        log(
+          `🚀 Web client ready. RoomId detected: ${urlRoomId}. Auto-connecting...`,
+          "info"
+        );
+        // Small delay to ensure DOM is fully ready
+        setTimeout(() => {
+          startSession();
+        }, 100);
+      } else {
+        log("🚀 Web client ready. Click Start Session to begin.", "info");
+      }
     </script>
   </body>
 </html>
