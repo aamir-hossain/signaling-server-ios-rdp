@@ -1,5 +1,4 @@
 using System.Collections.Concurrent; // For thread-safe dictionary
-using System.Net;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
@@ -8,57 +7,6 @@ var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
 
 app.UseWebSockets();
-
-// TURN credential proxy endpoint (keeps Metered API key off clients).
-// Web/iOS can call: http://<server>:5050/turn/credentials
-app.MapGet("/turn/credentials", async (HttpContext ctx) =>
-{
-    // Allow calling from a separate web origin (e.g. client.html served on :8080)
-    ctx.Response.Headers["Access-Control-Allow-Origin"] = "*";
-
-    var turnSection = app.Configuration.GetSection("Turn");
-    var provider = (turnSection["Provider"] ?? "none").Trim();
-
-    if (provider.Equals("metered", StringComparison.OrdinalIgnoreCase))
-    {
-        var baseUrl = (turnSection["MeteredCredentialsUrl"] ?? string.Empty).Trim();
-        var apiKey = (turnSection["ApiKey"] ?? string.Empty).Trim();
-        if (string.IsNullOrWhiteSpace(apiKey))
-        {
-            apiKey = (Environment.GetEnvironmentVariable("TURN_METERED_API_KEY") ?? string.Empty).Trim();
-        }
-
-        if (!string.IsNullOrWhiteSpace(baseUrl) && !string.IsNullOrWhiteSpace(apiKey))
-        {
-            try
-            {
-                var separator = baseUrl.Contains('?') ? "&" : "?";
-                var url = $"{baseUrl}{separator}apiKey={WebUtility.UrlEncode(apiKey)}";
-
-                using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(6) };
-                var json = await http.GetStringAsync(url);
-                // Normal mode: return provider JSON as-is (Metered returns STUN + TURN).
-                return Results.Content(json, "application/json");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"⚠️ TURN credentials fetch failed: {ex.Message}");
-            }
-        }
-        else
-        {
-            Console.WriteLine("⚠️ TURN provider metered configured but MeteredCredentialsUrl/ApiKey missing.");
-        }
-    }
-
-    // Fallback: STUN only (works for many networks; TURN is required behind strict NAT/firewalls)
-    var fallback = new object[]
-    {
-        new { urls = "stun:stun.l.google.com:19302" },
-        new { urls = "stun:stun1.l.google.com:19302" },
-    };
-    return Results.Json(fallback);
-});
 
 // Simple HTTP health endpoint to verify device-to-Mac reachability (firewall/Wi‑Fi).
 // This does not participate in WebSocket signaling; it is purely for testing.
