@@ -584,6 +584,27 @@
         iceServers: [
           { urls: "stun:stun.l.google.com:19302" },
           { urls: "stun:stun1.l.google.com:19302" },
+          { urls: "stun:stun.relay.metered.ca:80" },
+          {
+            urls: "turn:global.relay.metered.ca:80",
+            username: "7a8b7af7e5a7b42209c10f56",
+            credential: "mim9ksdUPmVtHYOa",
+          },
+          {
+            urls: "turn:global.relay.metered.ca:80?transport=tcp",
+            username: "7a8b7af7e5a7b42209c10f56",
+            credential: "mim9ksdUPmVtHYOa",
+          },
+          {
+            urls: "turn:global.relay.metered.ca:443",
+            username: "7a8b7af7e5a7b42209c10f56",
+            credential: "mim9ksdUPmVtHYOa",
+          },
+          {
+            urls: "turns:global.relay.metered.ca:443?transport=tcp",
+            username: "7a8b7af7e5a7b42209c10f56",
+            credential: "mim9ksdUPmVtHYOa",
+          },
         ],
       };
 
@@ -755,6 +776,7 @@
           ...configuration,
           // Prefer H.264 over VP8/VP9
           sdpSemantics: "unified-plan",
+          iceTransportPolicy: "all",
         };
 
         peerConnection = new RTCPeerConnection(pcConfiguration);
