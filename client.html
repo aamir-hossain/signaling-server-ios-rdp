@@ -579,31 +579,29 @@
       let swipeStartPosition = null;
       let swipeStartTime = null;
 
-      // WebRTC ICE servers (STUN only for now).
+      // WebRTC ICE servers (STUN + ExpressTurn TURN servers).
       let configuration = {
         iceServers: [
+          // STUN servers
           { urls: "stun:stun.l.google.com:19302" },
           { urls: "stun:stun1.l.google.com:19302" },
           { urls: "stun:stun.relay.metered.ca:80" },
+          // ExpressTurn TURN servers
           {
-            urls: "turn:global.relay.metered.ca:80",
-            username: "7a8b7af7e5a7b42209c10f56",
-            credential: "mim9ksdUPmVtHYOa",
-          },
-          {
-            urls: "turn:global.relay.metered.ca:80?transport=tcp",
-            username: "7a8b7af7e5a7b42209c10f56",
-            credential: "mim9ksdUPmVtHYOa",
-          },
-          {
-            urls: "turn:global.relay.metered.ca:443",
-            username: "7a8b7af7e5a7b42209c10f56",
-            credential: "mim9ksdUPmVtHYOa",
-          },
-          {
-            urls: "turns:global.relay.metered.ca:443?transport=tcp",
-            username: "7a8b7af7e5a7b42209c10f56",
-            credential: "mim9ksdUPmVtHYOa",
+            urls: [
+              "turn:relay1.expressturn.com:80",
+              "turn:relay1.expressturn.com:80?transport=tcp",
+              "turns:relay1.expressturn.com:443",
+              "turns:relay1.expressturn.com:443?transport=tcp",
+              "turn:relay1.expressturn.com:3478",
+              "turn:relay1.expressturn.com:3478?transport=tcp",
+              "turn:relay2.expressturn.com:3478",
+              "turn:relay2.expressturn.com:3478?transport=tcp",
+              "turn:global.expressturn.com:3478",
+              "turn:global.expressturn.com:3478?transport=tcp",
+            ],
+            username: "000000002083092410",
+            credential: "puFViqkU81csvRTrtJsWI7iLT/k=",
           },
         ],
       };
@@ -655,6 +653,7 @@
 
       function connectWebSocket() {
         // Use hardcoded server URL
+        // const serverUrl = "wss://ztuembackend.zerotouch.ai/iosws";
         const serverUrl = "ws://localhost:5050/ws";
         // Read roomId from URL parameter (?room= or ?roomId=), fallback to default
         const urlParams = new URLSearchParams(window.location.search);
